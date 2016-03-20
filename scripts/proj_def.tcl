@@ -1,0 +1,13 @@
+set eprj_proj_name "my_project"
+set eprj_def_root "src"
+set eprj_top_entity "top"
+set eprj_board_part ""
+set eprj_part "xc7k325tffg900-2"
+set eprj_target_language "VHDL"
+set eprj_simulator_language "Mixed"
+set eprj_default_lib "work"
+set eprj_synth_flow "Vivado Synthesis 2015"
+set eprj_synth_strategy "Flow_PerfOptimized_high"
+set eprj_impl_flow "Vivado Implementation 2015"
+set eprj_impl_strategy "Performance_Retiming"
+
