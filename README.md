@@ -20,6 +20,7 @@ The following types are recognized:
 * verilog - for Verilog sources
 * mif - for Memory Initialization Files
 * vhdl - for VHDL sources
+* xdc - for design constrains (in that case the "library" argument is not used, you can set it to "none").
 
 Of course one can easily extend this list, modifying the eprj_create.tcl script.
 All filepaths are taken realtively to the directory, in which the current EPRJ file is created. This allows to easile reuse IP blocks, by including their top EPRJ file from different directories in different projects.
