@@ -1,0 +1,3 @@
+bd none design_1.bd
+vhdl work hdl/design_1_wrapper.vhd
+
