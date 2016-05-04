@@ -1,6 +1,7 @@
 # Script prepared by Wojciech M. Zabolotny (wzab<at>ise.pw.edu.pl) to
 # create a Vivado project from the hierarchical list of files
-# (extended project files)
+# (extended project files).
+# This files are published as PUBLIC DOMAIN
 # 
 # Source the project settings
 source proj_def.tcl
@@ -14,7 +15,7 @@ create_project $eprj_proj_name ./$eprj_proj_name
 set proj_dir [get_property directory [current_project]]
 
 # Set project properties
-set obj [get_projects afck_sts_tester]
+set obj [get_projects $eprj_proj_name]
 set_property "board_part" $eprj_board_part $obj
 set_property "part" $eprj_part $obj
 set_property "default_lib" $eprj_default_lib $obj
@@ -98,6 +99,7 @@ foreach line $prj_lines {
 	     [string match -nocase $type "sys_verilog"]  || \
 	     [string match -nocase $type "verilog"] || \
 	     [string match -nocase $type "mif"] || \
+	     [string match -nocase $type "bd"] || \
 	     [string match -nocase $type "vhdl"]} {
 	    
 	set nfile [file normalize "$pdir/$fname"]
@@ -140,6 +142,12 @@ foreach line $prj_lines {
 	    set_property "library" $lib $file_obj
             export_ip_user_files -of_objects  $file_obj -force -quiet
 	}
+	#Handle BD file
+	if {[string match -nocase $type "bd"]} {
+	   if { ![get_property "is_locked" $file_obj] } {
+	      set_property "generate_synth_checkpoint" "0" $file_obj
+	    }
+	}
 	#Handle MIF file
 	if {[string match -nocase $type "mif"]} {
             set_property "file_type" "Memory Initialization Files" $file_obj
@@ -156,8 +164,20 @@ foreach line $prj_lines {
 	set file_obj [get_files -of_objects $cobj $nfile]
 	set_property "file_type" "XDC" $file_obj
     }	
+    if { [string match -nocase $type "exec"]} {
+	set nfile [file normalize "$pdir/$fname"]
+        if {![file exists $nfile]} {
+           error "Requested file $nfile is not available!"
+        }
+        #Execute the program in its directory
+        set old_dir [ pwd ]
+        cd $pdir
+	exec "./$fname"
+        cd $old_dir
+    }	
 }
 set_property "top" $eprj_top_entity $sobj
+update_compile_order -fileset sources_1
 # Create 'synth_1' run (if not found)
 if {[string equal [get_runs -quiet synth_1] ""]} {
   create_run -name synth_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_synth_strategy -constrset constrs_1
