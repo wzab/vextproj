@@ -72,7 +72,7 @@ you should find the `uImage` (kernel+rootfs) and `system.dtb` (device tree) that
 with the bitstream should be passed to the Z-Turn board (e.g. placed on the SD card, or
 put on the TFTP server from where the Z-Turn board donwloads it).
 
-After booting the Z-Turn board, please write `axil2ipb` in the console. The device drivwr will be loaded and the test program will be started. You should see the contents of four IPbus-accessible registers in the console, and the LED will change colour every half second. 
+After booting the Z-Turn board, please write `axil2ipb` in the console. The device driver will be loaded and the test program will be started. You should see the contents of four IPbus-accessible registers in the console, and the LED will change colour every half second. 
 
 If you modify the HDL design or ARM configuration, you may need to modify the device-tree sources.
 Unfortunately my scripts do not do that automatically (yet?).
