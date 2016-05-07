@@ -95,7 +95,7 @@ To make testing easier, I have put the DTS sources generated for the initial ver
 
 ## References
 The _vextproj_ was inspired by many publications. Below I provide the most important. (I'm sorry if I've forgotten some of them).
-1. http://xillybus.com/tutorials/vivado-version-control-packaging
-2. http://www.fpgadeveloper.com/2014/08/version-control-for-vivado-projects.html
-3. http://electronics.stackexchange.com/questions/59477/using-svn-with-xilinx-vivado
+  1. http://xillybus.com/tutorials/vivado-version-control-packaging
+  2. http://www.fpgadeveloper.com/2014/08/version-control-for-vivado-projects.html
+  3. http://electronics.stackexchange.com/questions/59477/using-svn-with-xilinx-vivado
 
