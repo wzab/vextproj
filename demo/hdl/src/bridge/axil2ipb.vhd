@@ -6,7 +6,7 @@
 -- Author     : Wojciech M. Zabolotny  <wzab@ise.pw.edu.pl>
 -- Company    : Institute of Electronic Systems, Warsaw University of Technology
 -- Created    : 2016-04-24
--- Last update: 2016-05-04
+-- Last update: 2016-05-07
 -- License    : This is a PUBLIC DOMAIN code, published under
 --              Creative Commons CC0 license
 -- Platform   : 
@@ -55,7 +55,7 @@ use work.ipbus.all;
 entity axil2ipb is
 
   generic (
-    ADRWIDTH : integer := 20);
+    ADRWIDTH : integer := 15);
 
   port (
     ---------------------------------------------------------------------------
@@ -65,7 +65,7 @@ entity axil2ipb is
     S_AXI_ACLK    : in  std_logic;
     S_AXI_ARESETN : in  std_logic;
     -- Write Address Channel
-    S_AXI_AWADDR  : in  std_logic_vector(31 downto 0);
+    S_AXI_AWADDR  : in  std_logic_vector(ADRWIDTH-1 downto 0);
     S_AXI_AWVALID : in  std_logic;
     S_AXI_AWREADY : out std_logic;
     -- Write Data Channel
@@ -74,7 +74,7 @@ entity axil2ipb is
     S_AXI_WVALID  : in  std_logic;
     S_AXI_WREADY  : out std_logic;
     -- Read Address Channel
-    S_AXI_ARADDR  : in  std_logic_vector(31 downto 0);
+    S_AXI_ARADDR  : in  std_logic_vector(ADRWIDTH-1 downto 0);
     S_AXI_ARVALID : in  std_logic;
     S_AXI_ARREADY : out std_logic;
     -- Read Data Channel
@@ -95,14 +95,13 @@ end entity axil2ipb;
 architecture beh of axil2ipb is
 
   function a_axi2ipb (
-    constant axi_addr : std_logic_vector(31 downto 0))
+    constant axi_addr : std_logic_vector(ADRWIDTH-1 downto 0))
     return std_logic_vector is
     variable ipb_addr : std_logic_vector(31 downto 0);
   begin  -- function a_axi2ipb
     ipb_addr                     := (others => '0');
     -- Divide the address by 4 (we use word addresses, not the byte addresses)
-    ipb_addr(29 downto 0)        := axi_addr(31 downto 2);
-    ipb_addr(31 downto ADRWIDTH) := (others => '0');
+    ipb_addr(ADRWIDTH-3 downto 0)        := axi_addr(ADRWIDTH-1 downto 2);
     return ipb_addr;
   end function a_axi2ipb;
 

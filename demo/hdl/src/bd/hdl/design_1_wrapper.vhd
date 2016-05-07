@@ -1,7 +1,7 @@
 --Copyright 1986-2016 Xilinx, Inc. All Rights Reserved.
 ----------------------------------------------------------------------------------
 --Tool Version: Vivado v.2016.1 (lin64) Build 1538259 Fri Apr  8 15:45:23 MDT 2016
---Date        : Wed May  4 14:17:53 2016
+--Date        : Sat May  7 21:32:59 2016
 --Host        : wzab running 64-bit Debian GNU/Linux testing/unstable
 --Command     : generate_target design_1_wrapper.bd
 --Design      : design_1_wrapper

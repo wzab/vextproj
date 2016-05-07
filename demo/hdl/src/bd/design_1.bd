@@ -675,7 +675,7 @@
         <spirit:instanceName>processing_system7_0_axi_periph</spirit:instanceName>
         <spirit:componentRef spirit:library="BlockDiagram/design_1_imp" spirit:name="processing_system7_0_axi_periph" spirit:vendor="xilinx.com" spirit:version="1.00.a"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">design_1_processing_system7_0_axi_periph_1</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">design_1_processing_system7_0_axi_periph_0</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="NUM_MI">1</spirit:configurableElementValue>
           <spirit:configurableElementValue spirit:referenceId="appcore">xilinx.com:ip:axi_interconnect:2.1</spirit:configurableElementValue>
         </spirit:configurableElementValues>
@@ -684,7 +684,7 @@
         <spirit:instanceName>rst_processing_system7_0_50M</spirit:instanceName>
         <spirit:componentRef spirit:library="ip" spirit:name="proc_sys_reset" spirit:vendor="xilinx.com" spirit:version="5.0"/>
         <spirit:configurableElementValues>
-          <spirit:configurableElementValue spirit:referenceId="bd:xciName">design_1_rst_processing_system7_0_50M_1</spirit:configurableElementValue>
+          <spirit:configurableElementValue spirit:referenceId="bd:xciName">design_1_rst_processing_system7_0_50M_0</spirit:configurableElementValue>
         </spirit:configurableElementValues>
       </spirit:componentInstance>
       <spirit:componentInstance>
@@ -1257,7 +1257,7 @@
             <spirit:name>SEG_axil2ipb_0_reg0</spirit:name>
             <spirit:displayName>/axil2ipb_0/S_AXI/reg0</spirit:displayName>
             <spirit:addressOffset>0x40000000</spirit:addressOffset>
-            <spirit:range>1G</spirit:range>
+            <spirit:range>16K</spirit:range>
           </spirit:segment>
         </spirit:segments>
       </spirit:addressSpace>
