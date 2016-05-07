@@ -8,8 +8,12 @@ BRNAME=buildroot-2016.02
 wget https://buildroot.org/downloads/$BRNAME.tar.bz2
 #Unpack Buildroot
 tar -xjf $BRNAME.tar.bz2
-#Add our stuff
-tar -xjf example.tar.bz2
+#Add our stuff (In the previous version we unpacked the
+#archive, but keeping archive in GIT does not allow
+#to track changes. Therefore now we copy contents from
+#the directory, using "tar" to ensure that all directories
+#and files, even hidden ones,  are copied/overwritten)
+( cd example ; tar -cf - . ) | tar -xf -
 #Modify the packages menu
 #It is not the most elegant way, but the simplest 
 #we just add new menu
