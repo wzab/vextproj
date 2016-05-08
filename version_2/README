@@ -1,0 +1,29 @@
+This is the working area for the new version, supporting the OOC synthesis.
+The demo design is modified so, that the IPbus part is moved outside the 
+BD (as Vivado does not allow to set OOC the sublocks of RTL blocks placed inside
+the BD design).
+
+Unfortunately, the IPbus had to be flattened to std_logic and std_logic_vector
+components, as Vivado does not support complex types in BD external ports...
+
+The demo design is now equipped additionally with two LFSR registers,
+located at base addresses 0x4 and 0x8.
+Writing to reg0 -> Sets the LFSR bits
+Writing to reg1 -> Shifts the LFSR register 
+Reading from reg2 -> Returns current value of the LFSR register
+(the width and the polynomial are defined in the lfsr_test_a and lfsr_test_b
+files).
+
+The demo design is prepared to demonstrate problems with setting OOC blocks
+with user defined types (as dicussed here:
+https://forums.xilinx.com/t5/Synthesis/Vivado-OOC-compilation-of-entities-with-ports-of-user-defined/m-p/696209 ).
+Therefore sources contain already the appropriate stubs.
+
+If you try to set both instances of the LFSR blocks OOC in the Vivado GUI, you'll
+experience problems with VHDL package which will be not available in all filesets.
+The only way to fix it, is to add it in the Tcl console...
+
+This will be handled automatically in the second version of VEXTPROJ.
+
+
+
