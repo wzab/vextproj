@@ -1,3 +1,4 @@
-bd none design_1.bd
+bd design_1.bd
 vhdl work design_1_wrapper.vhd
+xdc_ooc design_1_ooc.xdc
 
