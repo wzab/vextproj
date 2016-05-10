@@ -47,7 +47,7 @@ proc eprj_create_block {ablock mode setname } {
 	}
 	# Both constraints and XDC should be added to the same set
 	set block(srcset) [get_filesets $setname]
-	set block(cnstrset) [get_filesets $setname]	
+	set block(cnstrset) [get_filesets $setname]
     } else {
 	error "The block mode must be either IC - in context, or OOC - out of context. The $mode value is unacceptable"
     }
@@ -173,6 +173,7 @@ proc handle_xdc_ooc {ablock pdir line} {
 	add_files -norecurse -fileset $block(cnstrset) $nfile
 	set file_obj [get_files -of_objects $block(cnstrset) $nfile]
 	set_property "file_type" "XDC" $file_obj
+	set_property USED_IN {out_of_context synthesis implementation} $file_obj
     }	
 }
 
@@ -216,6 +217,48 @@ proc handle_line { ablock pdir line } {
     }    
 }
 
+proc handle_ooc { ablock pdir line } {
+    global eprj_impl_strategy
+    global eprj_impl_flow
+    global eprj_synth_strategy
+    global eprj_synth_flow
+    global eprj_flow
+    global eprj_part
+    
+    upvar $ablock block
+    lassign $line type stub fname blksetname
+    #Create the new block of type OOC and continue parsing in it
+    array set ooc_block {}
+    eprj_create_block ooc_block "OOC" $blksetname
+    if {[string match -nocase $stub "noauto"]} {
+	set_property "use_blackbox_stub" "0" [get_filesets $blksetname]
+    } elseif {![string match -nocase $stub "auto"]} {
+	error "OOC stub creation mode must be either 'auto' or 'noauto' not: $stub"
+    }
+    read_prj ooc_block $pdir/$fname
+    set_property TOP $blksetname [get_filesets $blksetname]
+    update_compile_order -fileset $blksetname
+    #Create synthesis run for the blockset (if not found)
+    if {[string equal [get_runs -quiet ${blksetname}_synth_1] ""]} {
+	create_run -name ${blksetname}_synth_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_synth_strategy -constrset $blksetname
+    } else {
+	set_property strategy $eprj_synth_strategy [get_runs ${blksetname}_synth_1]
+	set_property flow $eprj_synth_flow [get_runs ${blksetname}_synth_1]
+    }
+    set_property constrset $blksetname [get_runs ${blksetname}_synth_1]
+    set_property part $eprj_part [get_runs ${blksetname}_synth_1]
+    # Create implementation run for the blockset (if not found)
+    if {[string equal [get_runs -quiet ${blksetname}_impl_1] ""]} {
+	create_run -name impl_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_impl_strategy -constrset $blksetname -parent_run ${blksetname}_synth_1
+    } else {
+	set_property strategy $eprj_impl_strategy [get_runs ${blksetname}_impl_1]
+	set_property flow $eprj_impl_flow [get_runs ${blksetname}_impl_1]
+    }
+    set_property constrset $blksetname [get_runs ${blksetname}_impl_1]
+    set_property part $eprj_part [get_runs ${blksetname}_impl_1]
+    set_property include_in_archive "0" [get_runs ${blksetname}_impl_1]
+}
+
 # Prepare the main block
 array set main_block {}
 eprj_create_block main_block "IC" ""
@@ -254,13 +297,7 @@ proc read_prj { ablock prj } {
                     puts "\tIncluding PRJ file: $prj_dir/$fname"
 		    read_prj block $prj_dir/$fname 
 		} elseif {[string match -nocase $type "ooc"]} {
-		    lassign $line type fname blksetname
-		    #Create the new block of type OOC and continue parsing in it
-		    array set ooc_block {}
-		    eprj_create_block ooc_block "OOC" $blksetname
-		    read_prj $ooc_block $prj_dir/$fname
-		    set_property TOP $blksetname [get_filesets $blksetname]
-		    update_compile_order -fileset $blksetname
+		    handle_ooc block $prj_dir $line
 		} else {
 		    handle_line block $prj_dir $line
 		}
