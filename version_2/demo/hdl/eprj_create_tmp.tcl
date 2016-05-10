@@ -259,6 +259,8 @@ proc read_prj { ablock prj } {
 		    array set ooc_block {}
 		    eprj_create_block ooc_block "OOC" $blksetname
 		    read_prj $ooc_block $prj_dir/$fname
+		    set_property TOP $blksetname [get_filesets $blksetname]
+		    update_compile_order -fileset $blksetname
 		} else {
 		    handle_line block $prj_dir $line
 		}
