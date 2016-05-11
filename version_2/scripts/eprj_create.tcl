@@ -22,14 +22,254 @@ set_property "default_lib" $eprj_default_lib $obj
 set_property "simulator_language" $eprj_simulator_language $obj
 set_property "target_language" $eprj_target_language $obj
 
+# The project reading procedure operates on objects storing the files
+proc eprj_create_block {ablock mode setname } {
+    upvar $ablock block    
+    #Set the mode of the block
+    #may be either IC - in context or OOC - out of context
+    set block(mode) $mode
+    if [string match -nocase $mode "IC"] {
+	# Create 'sources_1' fileset (if not found)
+	if {[string equal [get_filesets -quiet sources_1] ""]} {
+	    create_fileset -srcset sources_1
+	}
+	set block(srcset) [get_filesets sources_1]
+	# Create 'constrs_1' fileset (if not found)
+	if {[string equal [get_filesets -quiet constrs_1] ""]} {
+	    create_fileset -constrset constrs_1
+	}
+	set block(cnstrset) [get_filesets constrs_1]
+    } elseif [string match -nocase $mode "OOC"] {
+	# We create only a single blkset
+	# Create 'setname' fileset (if not found)
+	if {[string equal [get_filesets -quiet $setname] ""]} {
+	    create_fileset -blockset $setname
+	}
+	# Both constraints and XDC should be added to the same set
+	set block(srcset) [get_filesets $setname]
+	set block(cnstrset) [get_filesets $setname]
+    } else {
+	error "The block mode must be either IC - in context, or OOC - out of context. The $mode value is unacceptable"
+    }
+}
+
+#Add file to the sources fileset
+proc add_file_sources {ablock pdir fname} {
+    upvar $ablock block
+    set nfile [file normalize "$pdir/$fname"]
+    if {! [file exists $nfile]} {
+	error "Requested file $nfile is not available!"
+    }
+    add_files -norecurse -fileset $block(srcset) $nfile
+    set file_obj [get_files -of_objects $block(srcset) $nfile]
+    return $file_obj
+}
+
+proc handle_xci {ablock pdir line} {
+    upvar $ablock block
+    #Handle XCI file
+    lassign $line lib fname
+    set file_obj [add_file_sources block $pdir $fname]
+    #set_property "synth_checkpoint_mode" "Singular" $file_obj
+    set_property "library" $lib $file_obj
+}
+
+proc handle_xci {ablock pdir line} {
+    upvar $ablock block
+    #Handle XCIX file
+    lassign $line lib fname
+    set file_obj [add_file_sources block $pdir $fname]
+    #set_property "synth_checkpoint_mode" "Singular" $file_obj
+    set_property "library" $lib $file_obj
+    export_ip_user_files -of_objects  $file_obj -force -quiet
+}
+
+proc handle_vhdl {ablock pdir line} {
+    upvar $ablock block
+    #Handle VHDL file
+    lassign $line lib fname
+    set file_obj [add_file_sources block $pdir $fname]
+    set_property "file_type" "VHDL" $file_obj
+    set_property "library" $lib $file_obj
+}
+
+proc handle_verilog {ablock pdir line} {
+    upvar $ablock block
+    #Handle Verilog file
+    lassign $line fname
+    set file_obj [add_file_sources block $pdir $fname]
+    set_property "file_type" "Verilog" $file_obj
+}
+
+proc handle_sys_verilog {ablock pdir line} {
+    upvar $ablock block
+    #Handle SystemVerilog file
+    lassign $line fname
+    set file_obj [add_file_sources block $pdir $fname]
+    set_property "file_type" "SystemVerilog" $file_obj
+}
+
+proc handle_verilog_header {ablock pdir line} {
+    upvar $ablock block
+    #Handle SystemVerilog file
+    lassign $line fname
+    set file_obj [add_file_sources block $pdir $fname]
+    set_property "file_type" "Verilog Header" $file_obj
+}
+
+proc handle_global_verilog_header {ablock pdir line} {
+    upvar $ablock block
+    #Handle Global Verilog Header file
+    lassign $line fname
+    set file_obj [add_file_sources block $pdir $fname]
+    set_property "file_type" "Verilog Header" $file_obj
+    set_property is_global_include true $file_obj
+}
+
+proc handle_bd {ablock pdir line} {
+    upvar $ablock block
+    #Handle BD file
+    lassign $line fname
+    set file_obj [add_file_sources block $pdir $fname]
+    if { ![get_property "is_locked" $file_obj] } {
+	set_property "generate_synth_checkpoint" "0" $file_obj
+    }
+}
+
+proc handle_mif {ablock pdir line} {
+    upvar $ablock block
+    #Handle MIF file
+    lassign $line fname
+    set file_obj [add_file_sources block $pdir $fname]
+    set_property "file_type" "Memory Initialization Files" $file_obj
+    set_property "library" $lib $file_obj
+    #set_property "synth_checkpoint_mode" "Singular" $file_obj
+}
+
+proc handle_xdc {ablock pdir line} {
+    upvar $ablock block
+    #Handle XDC file
+    lassign $line fname
+    set nfile [file normalize "$pdir/$fname"]
+    if {![file exists $nfile]} {
+	error "Requested file $nfile is not available!"
+    }
+    add_files -norecurse -fileset $block(cnstrset) $nfile
+    set file_obj [get_files -of_objects $block(cnstrset) $nfile]
+    set_property "file_type" "XDC" $file_obj
+}	
+
+proc handle_xdc_ooc {ablock pdir line} {
+    upvar $ablock block
+    #Handle XDC_OOC file
+    lassign $line fname
+    set nfile [file normalize "$pdir/$fname"]
+    if {![file exists $nfile]} {
+	error "Requested file $nfile is not available!"
+    }
+    if {![string match -nocase $block(mode) "OOC"]} {
+	puts "Ignored file $nfile in IC mode"
+    } else {
+	add_files -norecurse -fileset $block(cnstrset) $nfile
+	set file_obj [get_files -of_objects $block(cnstrset) $nfile]
+	set_property "file_type" "XDC" $file_obj
+	set_property USED_IN {out_of_context synthesis implementation} $file_obj
+    }	
+}
+
+proc handle_exec {ablock pdir line} {
+    upvar $ablock block
+    #Handle EXEC line
+    lassign $line fname
+    set nfile [file normalize "$pdir/$fname"]
+    if {![file exists $nfile]} {
+	error "Requested file $nfile is not available!"
+    }
+    #Execute the program in its directory
+    set old_dir [ pwd ]
+    cd $pdir
+    exec "./$fname"
+    cd $old_dir
+}	
+
+#Line handling procedure
+proc handle_line { ablock pdir line } {
+    upvar $ablock block
+    set rest [lassign $line type]
+    switch [string tolower $type] {
+	
+	xci { handle_xci block $pdir $rest}
+	xcix { handle_xcix block $pdir $rest}
+	header { handle_header block $pdir $rest}
+        global_header { handle_global_header block $pdir $rest}
+	sys_verilog { handle_sys_verilog block $pdir $rest}
+	verilog { handle_verilog block $pdir $rest}
+	mif { handle_mif block $pdir $rest}
+	bd { handle_bd block $pdir $rest}
+	vhdl { handle_vhdl block $pdir $rest}
+
+	xdc { handle_xdc block $pdir $rest}
+	xdc_ooc { handle_xdc_ooc block $pdir $rest}
+	exec { handle_exec block $pdir $rest}
+	default {
+	    error "Unknown line of type: $type"
+	}
+    }    
+}
+
+proc handle_ooc { ablock pdir line } {
+    global eprj_impl_strategy
+    global eprj_impl_flow
+    global eprj_synth_strategy
+    global eprj_synth_flow
+    global eprj_flow
+    global eprj_part
+    
+    upvar $ablock block
+    lassign $line type stub fname blksetname
+    #Create the new block of type OOC and continue parsing in it
+    array set ooc_block {}
+    eprj_create_block ooc_block "OOC" $blksetname
+    if {[string match -nocase $stub "noauto"]} {
+	set_property "use_blackbox_stub" "0" [get_filesets $blksetname]
+    } elseif {![string match -nocase $stub "auto"]} {
+	error "OOC stub creation mode must be either 'auto' or 'noauto' not: $stub"
+    }
+    read_prj ooc_block $pdir/$fname
+    set_property TOP $blksetname [get_filesets $blksetname]
+    update_compile_order -fileset $blksetname
+    #Create synthesis run for the blockset (if not found)
+    if {[string equal [get_runs -quiet ${blksetname}_synth_1] ""]} {
+	create_run -name ${blksetname}_synth_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_synth_strategy -constrset $blksetname
+    } else {
+	set_property strategy $eprj_synth_strategy [get_runs ${blksetname}_synth_1]
+	set_property flow $eprj_synth_flow [get_runs ${blksetname}_synth_1]
+    }
+    set_property constrset $blksetname [get_runs ${blksetname}_synth_1]
+    set_property part $eprj_part [get_runs ${blksetname}_synth_1]
+    # Create implementation run for the blockset (if not found)
+    if {[string equal [get_runs -quiet ${blksetname}_impl_1] ""]} {
+	create_run -name impl_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_impl_strategy -constrset $blksetname -parent_run ${blksetname}_synth_1
+    } else {
+	set_property strategy $eprj_impl_strategy [get_runs ${blksetname}_impl_1]
+	set_property flow $eprj_impl_flow [get_runs ${blksetname}_impl_1]
+    }
+    set_property constrset $blksetname [get_runs ${blksetname}_impl_1]
+    set_property part $eprj_part [get_runs ${blksetname}_impl_1]
+    set_property include_in_archive "0" [get_runs ${blksetname}_impl_1]
+}
+
+# Prepare the main block
+array set main_block {}
+eprj_create_block main_block "IC" ""
+
 # Procedure below reads the source files from PRJ files, extended with
 # the "include file" statement
-
 #Important thing - path to the source files should be given relatively
 #to the location of the PRJ file.
-proc read_prj { prj } {
-    #initialize results to an empty list
-    set res []
+proc read_prj { ablock prj } {
+    upvar $ablock block
+    parray block
     #allow to use just the directory names. In this case add
     #the "/main.eprj" to it
     if {[file isdirectory $prj]} {
@@ -51,132 +291,27 @@ proc read_prj { prj } {
 	    incr line_count
 	    #Ignore empty and commented lines
 	    if {[llength $line] > 0 && ![string match -nocase "#*" $line]} {
-		#Detect the inlude line
+		#Detect the inlude line and ooc line
 		lassign $line type fname
 		if {[string match -nocase $type "include"]} {
                     puts "\tIncluding PRJ file: $prj_dir/$fname"
-		    set inc [ read_prj $prj_dir/$fname ]
-		    foreach l $inc {
-			lappend res $l
-		    }
+		    read_prj block $prj_dir/$fname 
+		} elseif {[string match -nocase $type "ooc"]} {
+		    handle_ooc block $prj_dir $line
 		} else {
-		    lappend res [linsert $line 0 $prj_dir] 
+		    handle_line block $prj_dir $line
 		}
 	    }
 	}
     } else {
       error "Requested file $prj is not available!"
     }
-    return $res
 }
 
 
-# Create 'sources_1' fileset (if not found)
-if {[string equal [get_filesets -quiet sources_1] ""]} {
-  create_fileset -srcset sources_1
-}
-set sobj [get_filesets sources_1]
-
-# Create 'constrs_1' fileset (if not found)
-if {[string equal [get_filesets -quiet constrs_1] ""]} {
-  create_fileset -constrset constrs_1
-}
-
-# Set 'constrs_1' fileset object
-set cobj [get_filesets constrs_1]
 # Read project definitions
-set prj_lines [ read_prj $eprj_def_root ]
-foreach line $prj_lines {
-    # Just read the type
-    puts $line
-    lassign $line pdir type lib fname
-    # Handle the source files
-    if { \
-	     [string match -nocase $type "xci"]  || \
-	     [string match -nocase $type "xcix"]  || \
-	     [string match -nocase $type "header"]  || \
-	     [string match -nocase $type "global_header"]  || \
-	     [string match -nocase $type "sys_verilog"]  || \
-	     [string match -nocase $type "verilog"] || \
-	     [string match -nocase $type "mif"] || \
-	     [string match -nocase $type "bd"] || \
-	     [string match -nocase $type "vhdl"]} {
-	    
-	set nfile [file normalize "$pdir/$fname"]
-        if {! [file exists $nfile]} {
-           error "Requested file $nfile is not available!"
-        }
-	add_files -norecurse -fileset $sobj $nfile
-	set file_obj [get_files -of_objects $sobj $nfile]
-	#Handle VHDL file
-	if {[string match -nocase $type "vhdl"]} {
-	    set_property "file_type" "VHDL" $file_obj
-	    set_property "library" $lib $file_obj
-	}
-	#Handle Verilog file
-	if {[string match -nocase $type "verilog"]} {
-	    set_property "file_type" "Verilog" $file_obj
-	    set_property "library" $lib $file_obj
-	}
-	#Handle SystemVerilog file
-	if {[string match -nocase $type "sys_verilog"]} {
-	    set_property "file_type" "SystemVerilog" $file_obj
-	}
-	#Handle Verilog header file
-	if {[string match -nocase $type "header"]} {
-	    set_property "file_type" "Verilog Header" $file_obj
-	}
-	#Handle global Verilog header file
-	if {[string match -nocase $type "global_header"]} {
-	    set_property "file_type" "Verilog Header" $file_obj
-	    set_property is_global_include true $file_obj
-	}
-	#Handle XCI file
-	if {[string match -nocase $type "xci"]} {
-	    #set_property "synth_checkpoint_mode" "Singular" $file_obj
-	    set_property "library" $lib $file_obj
-	}
-	#Handle XCIX file
-	if {[string match -nocase $type "xcix"]} {
-	    #set_property "synth_checkpoint_mode" "Singular" $file_obj
-	    set_property "library" $lib $file_obj
-            export_ip_user_files -of_objects  $file_obj -force -quiet
-	}
-	#Handle BD file
-	if {[string match -nocase $type "bd"]} {
-	   if { ![get_property "is_locked" $file_obj] } {
-	      set_property "generate_synth_checkpoint" "0" $file_obj
-	    }
-	}
-	#Handle MIF file
-	if {[string match -nocase $type "mif"]} {
-            set_property "file_type" "Memory Initialization Files" $file_obj
-	    set_property "library" $lib $file_obj
-	    #set_property "synth_checkpoint_mode" "Singular" $file_obj
-	}
-    }
-    if { [string match -nocase $type "xdc"]} {
-	set nfile [file normalize "$pdir/$fname"]
-        if {![file exists $nfile]} {
-           error "Requested file $nfile is not available!"
-        }
-	add_files -norecurse -fileset $cobj $nfile
-	set file_obj [get_files -of_objects $cobj $nfile]
-	set_property "file_type" "XDC" $file_obj
-    }	
-    if { [string match -nocase $type "exec"]} {
-	set nfile [file normalize "$pdir/$fname"]
-        if {![file exists $nfile]} {
-           error "Requested file $nfile is not available!"
-        }
-        #Execute the program in its directory
-        set old_dir [ pwd ]
-        cd $pdir
-	exec "./$fname"
-        cd $old_dir
-    }	
-}
-set_property "top" $eprj_top_entity $sobj
+read_prj main_block $eprj_def_root 
+set_property "top" $eprj_top_entity  $main_block(srcset)
 update_compile_order -fileset sources_1
 # Create 'synth_1' run (if not found)
 if {[string equal [get_runs -quiet synth_1] ""]} {

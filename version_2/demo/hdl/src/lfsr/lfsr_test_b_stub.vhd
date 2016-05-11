@@ -29,7 +29,6 @@ use IEEE.STD_LOGIC_1164.all;
 use ieee.numeric_std.all;
 library work;
 use work.ipbus.all;
-use work.ipbus_reg_types.all;
 
 entity lfsr_test_b is
 
