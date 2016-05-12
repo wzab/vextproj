@@ -10,4 +10,5 @@ set eprj_synth_flow "Vivado Synthesis 2016"
 set eprj_synth_strategy "Flow_PerfOptimized_high"
 set eprj_impl_flow "Vivado Implementation 2016"
 set eprj_impl_strategy "Performance_Retiming"
+set eprj_vivado_version "2016.1"
 

@@ -8,6 +8,12 @@ source proj_def.tcl
 # Set the reference directory for source file relative paths (by default the value is script directory path)
 set origin_dir "."
 
+# Check the Vivado version
+set viv_version [ version -short ]
+if [ expr $viv_version != $eprj_vivado_version ] {
+  error "Wrong Vivado version. Expected: $eprj_vivado_version , found $viv_version"
+}
+
 # Create project
 create_project $eprj_proj_name ./$eprj_proj_name
 
