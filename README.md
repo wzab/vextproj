@@ -7,33 +7,78 @@ For operation with VCS (especially GIT) it is important, that you can build a hi
 having the flat structure of directories (one directory for each reusable component, all at the same level).
 This allows to avoid using of submodules.
 
-The source definition line in the EPRJ file has the following syntax:
+# EPRJ file format
+The description below describes the format used by the version 2 of the environment, which supports OOC compilation
+of selected parts of the design.
+This version is available in the "version_2" directory
 
-type  library filepath
+The EPRJ file may contain the following lines:
+* xci library file\_name
 
-The following types are recognized:
-* xci   - For IP cores
-* xcix  - For IP cores containers
-* header - for Verilog headers
-* global_header - for global Verilog headers
-* sys_verilog - for System Verilog files
-* verilog - for Verilog sources
-* mif - for Memory Initialization Files
-* vhdl - for VHDL sources
-* bd - for Block Designer sources
-* xdc - for design constrains (in that case the "library" argument is not used, you can set it to "none").
-* exec - for scripts which should be executed in their directories. Watch out! This may execute arbitrary
-  commands on your account!
+  This line adds the XCI file to the project
+* xcix library file\_name
 
-Of course one can easily extend this list, modifying the eprj_create.tcl script.
-All filepaths are taken realtively to the directory, in which the current EPRJ file is created. This allows to easile reuse IP blocks, by including their top EPRJ file from different directories in different projects.
+  This line adds the XCIX file to the project
+* header file\_name
 
-The include line has a very simple syntax:
+  This line adds the Verilog header file to the project
+* global\_header file\_name
 
-include directory_or_filepath
+  This line adds the global Verilog header to the project
+* sys\_verilog file\_name
+ 
+  This line adds the System Verilog source to the project
+*	verilog file\_name
 
-If the second word is the directory, then the default "main.eprj" file is searched for in that directory.
-You may include another file by specifying its path including the file name (it may be useful, if the particular IP block may be reused in different ways, including only certain subset of sources).
+  This line adds the Verilog source to the project
+*	mif file\_name
+
+  This line adds the MIF file to the project
+  
+* bd file\_name
+ 
+  This line adds the Block Design component to the project
+
+*	vhdl library file\_name
+
+  This line adds the VHDL file to the specified library in the project
+
+*	xdc file\_name
+
+  This line adds the XDC constraints file to the project
+
+*	xdc_ooc
+
+  This line adds the XDC OOC constraints file to the project (only to the blocks selected for OOC synthesis)
+
+*	exec file\_name
+	
+  This line requests execution of the script. The script is executed in its directory. This line may be a security risk, but it is not more dangerous, than a simple Makefile...
+
+Additionally there are two lines with special meaning:
+
+* include directory\_path or eprj\_file\_path
+ 
+ This line includes components, constraints and other items described by another EPRJ file. The paths may be absolute, but usually they are relative to the directory of the currently processed EPRJ file. If the directory\_path is specified, then the main.eprj is added at the end. Otherwise the full name of the included EPRJ file should be given.
+
+* ooc stub file\_name blk\_top\_entity
+ 
+  This line specifies that the block defined by the file\_name EPRJ file should be compiled Out-of-context (OOC). The stub field may be set to "auto" - informing that the stub should be generated automatically by the Vivado, or to "noauto" - informing, that the stub is provided in sources. The latter should be used if the OOC block uses ports with user defined types (e.g., the VHDL records). The blk\_top\_entity field should be the name of the top entity of the OOC-block. It will be also used as the name of the created fileset.
+
+  Please note, that the stubs must be included in the appropriate EPRJ file. The important fact is, that the VHDL stubs must be put into the _xil\_defaultlib_ directory (at least for Vivado 2016.1). Otherwise Vivado does not recognize them as stubs.
+  Below is an example of definition of two OOC blocks together with inclusion of their stubs:
+  ```
+  ooc noauto lfsr_test_a_ooc.eprj lfsr_test_a
+  vhdl xil_defaultlib lfsr_test_a_stub.vhd
+  ooc noauto lfsr_test_b_ooc.eprj lfsr_test_b
+  vhdl xil_defaultlib lfsr_test_b_stub.vhd
+  ```
+
+Of course one can easily extend this list, modifying the eprj_create.tcl script. 
+The line type is detected in the handle\_line procedure, and separate handlers are provided for different lines.
+The _include_ and _ooc_ lines are handled directly in the _read\_prj_ procedure.
+
+The fact, that the file-paths are taken realtively to the directory, in which the current EPRJ file is created allows to easily reuse IP blocks, by including their top EPRJ file from different directories in different projects.
 
 ## How to use this solution
 
