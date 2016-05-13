@@ -8,12 +8,17 @@ puts "INFO: Project loaded:$eprj_proj_name"
 reset_run synth_1
 # Two lines below are the workaround for the problem reported here:
 # https://forums.xilinx.com/t5/Synthesis/Vivado-incorrect-automatic-compilation-order-in-OOC-synthesis/td-p/698067
-reset_run lfsr_test_a_synth_1
-reset_run lfsr_test_b_synth_1
-launch_runs lfsr_test_b_synth_1 lfsr_test_a_synth_1 -jobs 4
+# In fact there should be the list of the OOC runs created by the eprj_create.tcl
+# script. At the moment this list is created manually...
+set ooc_runs { lfsr_test_a_synth_1 lfsr_test_b_synth_1 }
+foreach { run } $ooc_runs {
+   reset_run $run
+}
+launch_runs $ooc_runs -jobs 4
 launch_runs synth_1 -scripts_only
-set_property NEEDS_REFRESH 0 [get_runs lfsr_test_b_synth_1]
-set_property NEEDS_REFRESH 0 [get_runs lfsr_test_a_synth_1]
+foreach { run } $ooc_runs {
+   set_property NEEDS_REFRESH 0 [get_runs $run]
+}
 reset_run synth_1
 # End of workaround
 launch_runs synth_1 -jobs 4

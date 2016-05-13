@@ -232,37 +232,37 @@ proc handle_ooc { ablock pdir line } {
     global eprj_part
     
     upvar $ablock block
-    lassign $line type stub fname blk_top_entity
+    lassign $line type stub fname blksetname
     #Create the new block of type OOC and continue parsing in it
     array set ooc_block {}
-    eprj_create_block ooc_block "OOC" $blk_top_entity
+    eprj_create_block ooc_block "OOC" $blksetname
     if {[string match -nocase $stub "noauto"]} {
-	set_property "use_blackbox_stub" "0" [get_filesets $blk_top_entity]
+	set_property "use_blackbox_stub" "0" [get_filesets $blksetname]
     } elseif {![string match -nocase $stub "auto"]} {
 	error "OOC stub creation mode must be either 'auto' or 'noauto' not: $stub"
     }
     read_prj ooc_block $pdir/$fname
-    set_property TOP $blk_top_entity [get_filesets $blk_top_entity]
-    update_compile_order -fileset $blk_top_entity
+    set_property TOP $blksetname [get_filesets $blksetname]
+    update_compile_order -fileset $blksetname
     #Create synthesis run for the blockset (if not found)
-    if {[string equal [get_runs -quiet ${blk_top_entity}_synth_1] ""]} {
-	create_run -name ${blk_top_entity}_synth_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_synth_strategy -constrset $blk_top_entity
+    if {[string equal [get_runs -quiet ${blksetname}_synth_1] ""]} {
+	create_run -name ${blksetname}_synth_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_synth_strategy -constrset $blksetname
     } else {
-	set_property strategy $eprj_synth_strategy [get_runs ${blk_top_entity}_synth_1]
-	set_property flow $eprj_synth_flow [get_runs ${blk_top_entity}_synth_1]
+	set_property strategy $eprj_synth_strategy [get_runs ${blksetname}_synth_1]
+	set_property flow $eprj_synth_flow [get_runs ${blksetname}_synth_1]
     }
-    set_property constrset $blk_top_entity [get_runs ${blk_top_entity}_synth_1]
-    set_property part $eprj_part [get_runs ${blk_top_entity}_synth_1]
+    set_property constrset $blksetname [get_runs ${blksetname}_synth_1]
+    set_property part $eprj_part [get_runs ${blksetname}_synth_1]
     # Create implementation run for the blockset (if not found)
-    if {[string equal [get_runs -quiet ${blk_top_entity}_impl_1] ""]} {
-	create_run -name impl_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_impl_strategy -constrset $blk_top_entity -parent_run ${blk_top_entity}_synth_1
+    if {[string equal [get_runs -quiet ${blksetname}_impl_1] ""]} {
+	create_run -name impl_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_impl_strategy -constrset $blksetname -parent_run ${blksetname}_synth_1
     } else {
-	set_property strategy $eprj_impl_strategy [get_runs ${blk_top_entity}_impl_1]
-	set_property flow $eprj_impl_flow [get_runs ${blk_top_entity}_impl_1]
+	set_property strategy $eprj_impl_strategy [get_runs ${blksetname}_impl_1]
+	set_property flow $eprj_impl_flow [get_runs ${blksetname}_impl_1]
     }
-    set_property constrset $blk_top_entity [get_runs ${blk_top_entity}_impl_1]
-    set_property part $eprj_part [get_runs ${blk_top_entity}_impl_1]
-    set_property include_in_archive "0" [get_runs ${blk_top_entity}_impl_1]
+    set_property constrset $blksetname [get_runs ${blksetname}_impl_1]
+    set_property part $eprj_part [get_runs ${blksetname}_impl_1]
+    set_property include_in_archive "0" [get_runs ${blksetname}_impl_1]
 }
 
 # Prepare the main block
