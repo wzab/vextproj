@@ -6,7 +6,7 @@
 -- Author     : Wojciech M. Zabolotny  <wzab@ise.pw.edu.pl>
 -- Company    : Institute of Electronic Systems, Warsaw University of Technology
 -- Created    : 2016-04-24
--- Last update: 2016-05-08
+-- Last update: 2016-05-14
 -- License    : This is a PUBLIC DOMAIN code, published under
 --              Creative Commons CC0 license
 -- Platform   : 
@@ -117,31 +117,32 @@ architecture beh of axil2ipb is
     return ipb_addr;
   end function a_axi2ipb;
 
-  signal rdata, rdata_in                                  : std_logic_vector(31 downto 0) := (others => '0');
-  signal bresp, rresp, bresp_in, rresp_in                 : std_logic_vector(1 downto 0)  := "00";
-  signal del_bresp, del_rresp, del_bresp_in, del_rresp_in : boolean                       := false;
-  signal master_ipb_out  : ipb_wbus;
-  signal master_ipb_in : ipb_rbus;
+  signal master_ipb_out                                     : ipb_wbus;
+  signal master_ipb_in                                      : ipb_rbus;
+  signal read_wait, read_wait_in, write_wait, write_wait_in : boolean                       := false;
+  signal rdata, rdata_in, addr, addr_in, wdata, wdata_in    : std_logic_vector(31 downto 0) := (others => '0');
+  signal bresp, rresp, bresp_in, rresp_in                   : std_logic_vector(1 downto 0)  := "00";
+  signal del_bresp, del_rresp, del_bresp_in, del_rresp_in   : boolean                       := false;
 
 begin  -- architecture beh
 
-  ipb_clk <= S_AXI_ACLK;
-  ipb_rst <= not S_AXI_ARESETN;
+  ipb_clk    <= S_AXI_ACLK;
+  ipb_rst    <= not S_AXI_ARESETN;
   -- We keep the master_ipb... signals internally in hope, that one day
   -- Xilinx/Vivado will be able to handle user defined records in ports of BD blocks...
-  ipb_addr <= master_ipb_out.ipb_addr;
-  ipb_wdata <= master_ipb_out.ipb_wdata;
+  ipb_addr   <= master_ipb_out.ipb_addr;
+  ipb_wdata  <= master_ipb_out.ipb_wdata;
   ipb_strobe <= master_ipb_out.ipb_strobe;
-  ipb_write <= master_ipb_out.ipb_write;
-  
+  ipb_write  <= master_ipb_out.ipb_write;
+
   master_ipb_in.ipb_rdata <= ipb_rdata;
-  master_ipb_in.ipb_ack <= ipb_ack;
-  master_ipb_in.ipb_err <= ipb_err;
-  
+  master_ipb_in.ipb_ack   <= ipb_ack;
+  master_ipb_in.ipb_err   <= ipb_err;
+
   qq : process (S_AXI_ARADDR, S_AXI_ARVALID, S_AXI_AWADDR, S_AXI_AWVALID,
                 S_AXI_BREADY, S_AXI_RREADY, S_AXI_WDATA, S_AXI_WSTRB,
-                S_AXI_WVALID, bresp, del_bresp, del_rresp, master_ipb_in,
-                rdata, rresp) is
+                S_AXI_WVALID, addr, bresp, del_bresp, del_rresp, master_ipb_in,
+                rdata, read_wait, rresp, wdata, write_wait) is
     variable is_read, is_write : boolean := false;
   begin  -- process qq
     -- Defaults
@@ -158,6 +159,10 @@ begin  -- architecture beh
     bresp_in                  <= bresp;
     rresp_in                  <= rresp;
     rdata_in                  <= rdata;
+    wdata_in                  <= wdata;
+    read_wait_in              <= read_wait;
+    write_wait_in             <= write_wait;
+    addr_in                   <= addr;
     S_AXI_BVALID              <= '0';
     S_AXI_BRESP               <= (others => '0');
     S_AXI_ARREADY             <= '0';
@@ -183,36 +188,52 @@ begin  -- architecture beh
         del_rresp_in <= false;
       end if;
     -- Handling of new transactions
-    elsif S_AXI_AWVALID = '1' and S_AXI_WVALID = '1' then
-      -- Check if this is a correct 32-bit write
-      if S_AXI_WSTRB /= "1111" then
-        -- Erroneouos write. If slave is ready to accept status, inform about it
-        S_AXI_AWREADY <= '1';
-        S_AXI_WREADY  <= '1';
-        S_AXI_BRESP   <= "10";
-        S_AXI_BVALID  <= '1';
-        if S_AXI_BREADY = '0' then
-          -- Prepare delayed response
-          bresp_in     <= "10";
-          del_bresp_in <= true;
-        end if;
-      else
-        is_write := true;
-      end if;
-    elsif S_AXI_ARVALID = '1' then
+    elsif (S_AXI_AWVALID = '1' and S_AXI_WVALID = '1') or write_wait then
+      is_write := true;
+    elsif S_AXI_ARVALID = '1' or read_wait then
       is_read := true;
     end if;
     -- Set the IPbus signals
     if is_write then
-      -- Write transaction on IPbus
-      master_ipb_out.ipb_addr   <= a_axi2ipb(S_AXI_AWADDR);
-      master_ipb_out.ipb_wdata  <= S_AXI_WDATA;
-      master_ipb_out.ipb_strobe <= '1';
-      master_ipb_out.ipb_write  <= '1';
+      -- Check if this is a new transmission
+      if S_AXI_AWVALID = '1' and S_AXI_WVALID = '1' and write_wait = false then
+        -- This is a new transmission
+        -- Check if this is a correct 32-bit write
+        if S_AXI_WSTRB /= "1111" then
+          -- Erroneouos write. If slave is ready to accept status, inform about it
+          S_AXI_AWREADY <= '1';
+          S_AXI_WREADY  <= '1';
+          S_AXI_BRESP   <= "10";
+          S_AXI_BVALID  <= '1';
+          if S_AXI_BREADY = '0' then
+            -- Prepare delayed response
+            bresp_in     <= "10";
+            del_bresp_in <= true;
+          end if;
+        else
+          -- Correct write
+          -- Write transaction on IPbus
+          master_ipb_out.ipb_addr   <= a_axi2ipb(S_AXI_AWADDR);
+          master_ipb_out.ipb_wdata  <= S_AXI_WDATA;
+          master_ipb_out.ipb_strobe <= '1';
+          master_ipb_out.ipb_write  <= '1';
+          -- Store data for the next cycles
+          addr_in                   <= a_axi2ipb(S_AXI_AWADDR);
+          wdata_in                  <= S_AXI_WDATA;
+          S_AXI_AWREADY             <= '1';
+          S_AXI_WREADY              <= '1';
+          write_wait_in             <= true;
+        end if;
+      else
+        -- This the next cycle of the write transmission
+        master_ipb_out.ipb_addr   <= addr;
+        master_ipb_out.ipb_wdata  <= wdata;
+        master_ipb_out.ipb_strobe <= '1';
+        master_ipb_out.ipb_write  <= '1';
+      end if;
       -- Check the slave response
       if master_ipb_in.ipb_err = '1' then
-        S_AXI_AWREADY <= '1';
-        S_AXI_WREADY  <= '1';
+        write_wait_in <= false;
         S_AXI_BRESP   <= "10";
         S_AXI_BVALID  <= '1';
         if S_AXI_BREADY = '0' then
@@ -221,8 +242,7 @@ begin  -- architecture beh
           del_bresp_in <= true;
         end if;
       elsif master_ipb_in.ipb_ack = '1' then
-        S_AXI_AWREADY <= '1';
-        S_AXI_WREADY  <= '1';
+        write_wait_in <= false;
         S_AXI_BRESP   <= "00";
         S_AXI_BVALID  <= '1';
         if S_AXI_BREADY = '0' then
@@ -233,15 +253,23 @@ begin  -- architecture beh
       end if;
     elsif is_read then
       -- Read transaction on IPbus
-      master_ipb_out.ipb_addr   <= a_axi2ipb(S_AXI_ARADDR);
+      if S_AXI_ARVALID = '1' and read_wait = false then
+        addr_in                 <= a_axi2ipb(S_AXI_ARADDR);
+        master_ipb_out.ipb_addr <= a_axi2ipb(S_AXI_ARADDR);
+        S_AXI_ARREADY           <= '1';
+        -- Remember that we are in read
+        read_wait_in            <= true;
+      else
+        master_ipb_out.ipb_addr <= addr;
+      end if;
       master_ipb_out.ipb_strobe <= '1';
       master_ipb_out.ipb_write  <= '0';
       -- Check the slave response
       if master_ipb_in.ipb_err = '1' then
-        S_AXI_ARREADY <= '1';
-        S_AXI_RRESP   <= "10";
-        S_AXI_RDATA   <= master_ipb_in.ipb_rdata;
-        S_AXI_RVALID  <= '1';
+        S_AXI_RRESP  <= "10";
+        S_AXI_RDATA  <= master_ipb_in.ipb_rdata;
+        S_AXI_RVALID <= '1';
+        read_wait_in <= false;
         if S_AXI_RREADY = '0' then
           -- Prepare delayed response
           rresp_in     <= "10";
@@ -249,10 +277,10 @@ begin  -- architecture beh
           del_rresp_in <= true;
         end if;
       elsif master_ipb_in.ipb_ack = '1' then
-        S_AXI_ARREADY <= '1';
-        S_AXI_RRESP   <= "00";
-        S_AXI_RDATA   <= master_ipb_in.ipb_rdata;
-        S_AXI_RVALID  <= '1';
+        S_AXI_RRESP  <= "00";
+        S_AXI_RDATA  <= master_ipb_in.ipb_rdata;
+        S_AXI_RVALID <= '1';
+        read_wait_in <= false;
         if S_AXI_RREADY = '0' then
           -- Prepare delayed response
           rresp_in     <= "00";
@@ -267,19 +295,28 @@ begin  -- architecture beh
   begin  -- process
     if S_AXI_ACLK'event and S_AXI_ACLK = '1' then  -- rising clock edge
       if S_AXI_ARESETN = '0' then       -- synchronous reset (active low)
-        del_rresp <= false;
-        del_bresp <= false;
-        rdata     <= (others => '0');
-        rresp     <= (others => '0');
-        bresp     <= (others => '0');
+        del_rresp  <= false;
+        del_bresp  <= false;
+        rdata      <= (others => '0');
+        wdata      <= (others => '0');
+        rresp      <= (others => '0');
+        bresp      <= (others => '0');
+        addr       <= (others => '0');
+        read_wait  <= false;
+        write_wait <= false;
       else
-        del_rresp <= del_rresp_in;
-        del_bresp <= del_bresp_in;
-        rdata     <= rdata_in;
-        rresp     <= rresp_in;
-        bresp     <= bresp_in;
+        del_rresp  <= del_rresp_in;
+        del_bresp  <= del_bresp_in;
+        addr       <= addr_in;
+        rdata      <= rdata_in;
+        wdata      <= wdata_in;
+        rresp      <= rresp_in;
+        bresp      <= bresp_in;
+        read_wait  <= read_wait_in;
+        write_wait <= write_wait_in;
       end if;
     end if;
   end process;
+
 
 end architecture beh;
