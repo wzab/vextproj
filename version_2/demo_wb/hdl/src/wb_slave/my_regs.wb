@@ -1,0 +1,149 @@
+
+-- here comes our peripheral definition
+peripheral {
+-- short (human-readable) name for the peripheral.
+	name = "TEST_regs";
+-- a longer description, if you want
+	description = "Set f registers used to test my AXI4-Lite to WB bridge";
+-- name of the target VHDL entity to be generated
+	hdl_entity = "wb_test_slave";
+
+-- prefix for all the generated ports belonging to our peripheral
+	prefix = "wbt";
+
+-- LEDS register. Readable and writable from the bus, readable from the device.
+	reg {
+		name = "LEDS register";
+		description = "A register defining the state of the LEDs";
+		prefix = "led";
+
+-- a single, anonymous field (no prefix) of type SLV.
+		field {
+			name = "LEDS";
+			description = "Each bit in this register defines the state of a single LED";
+-- type of our field - std_logic_vector
+			type = SLV;
+-- size - we want 32-bits wide port :)
+			size = 3;
+
+-- the field will be readable/writable from the Wishbone bus
+			access_bus = READ_WRITE;
+			
+-- .. and readable from the peripheral
+			access_dev = READ_ONLY;
+		};
+	};
+
+-- USER KEY register
+-- Pin input state register. Readable the bus, writable from the device.
+	reg {
+		name = "KEY state register";
+		description = "A register containing the current state of the USER KEY.";
+		prefix = "key";
+
+-- a single, anonymous field (no prefix) of type SLV.
+		field {
+			name = "KEY state";
+			description = "Each bit in this register reflects the state of corresponding KEY pin.";
+
+-- no prefix here as well (see above)
+
+-- type of our field - std_logic_vector
+			type = SLV;
+
+-- size - we want 32-bits wide port :)
+			size = 32;
+
+-- the field will be readable from the Wishbone bus
+			access_bus = READ_ONLY;
+			
+-- .. and writable from the peripheral
+			access_dev = WRITE_ONLY;
+		};
+	};
+
+-- USER DOUT1 register
+-- Pin input state register. Readable the bus, writable from the device.
+	reg {
+		name = "DOUT1 state register";
+		description = "A register containing the current state of the USER KEY.";
+		prefix = "do1";
+
+-- a single, anonymous field (no prefix) of type SLV.
+		field {
+			name = "KEY state";
+			description = "Each bit in this register reflects the state of corresponding KEY pin.";
+
+-- no prefix here as well (see above)
+
+-- type of our field - std_logic_vector
+			type = SLV;
+
+-- size - we want 32-bits wide port :)
+			size = 32;
+
+-- the field will be readable from the Wishbone bus
+			access_bus = READ_WRITE;
+			
+-- .. and writable from the peripheral
+			access_dev = READ_ONLY;
+		};
+	};
+
+-- USER DOUT2 register
+-- Pin input state register. Readable the bus, writable from the device.
+	reg {
+		name = "DOUT2 state register";
+		description = "A register containing the current state of the USER KEY.";
+		prefix = "do2";
+
+-- a single, anonymous field (no prefix) of type SLV.
+		field {
+			name = "KEY state";
+			description = "Each bit in this register reflects the state of corresponding KEY pin.";
+
+-- no prefix here as well (see above)
+
+-- type of our field - std_logic_vector
+			type = SLV;
+
+-- size - we want 32-bits wide port :)
+			size = 32;
+
+-- the field will be readable from the Wishbone bus
+			access_bus = READ_WRITE;
+			
+-- .. and writable from the peripheral
+			access_dev = READ_ONLY;
+		};
+	};
+
+-- USER DIN1 register
+-- Pin input state register. Readable the bus, writable from the device.
+	reg {
+		name = "DIN1 input register";
+		description = "A register containing the current state of the USER KEY.";
+		prefix = "di1";
+
+-- a single, anonymous field (no prefix) of type SLV.
+		field {
+			name = "KEY state";
+			description = "Each bit in this register reflects the state of corresponding KEY pin.";
+
+-- no prefix here as well (see above)
+
+-- type of our field - std_logic_vector
+			type = SLV;
+
+-- size - we want 32-bits wide port :)
+			size = 32;
+
+-- the field will be readable from the Wishbone bus
+			access_bus = READ_ONLY;
+			
+-- .. and writable from the peripheral
+			access_dev = WRITE_ONLY;
+		};
+	};
+
+};

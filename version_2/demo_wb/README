@@ -1,0 +1,10 @@
+This directory contains demo project for Z-Turn board, based on my AXI4-Lite to Wishbone bridge.
+At the moment the design is very simple, so no drivers are provided yet (no "software" directory).
+The WB slaves may be accessed vie "devmem" program using the Linux image compiled in 
+the "demo/software" directory. The base address for Wishbone slaves is 0x43c00000.
+
+This demo will be extended in the nearest future so, that it will make full use of the OOC
+capabilities.
+Please note, that the AXI4-Lite to WB bridge is just "proof of the concept" version.
+It supports only "classic standard" accesses.
+
