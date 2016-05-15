@@ -2,11 +2,11 @@
 -- Title      : axil2wb
 -- Project    : 
 -------------------------------------------------------------------------------
--- File       : axil2ipb.vhd
+-- File       : axil2wb.vhd
 -- Author     : Wojciech M. Zabolotny  <wzab@ise.pw.edu.pl>
 -- Company    : Institute of Electronic Systems, Warsaw University of Technology
 -- Created    : 2016-04-24
--- Last update: 2016-05-14
+-- Last update: 2016-05-15
 -- License    : This is a PUBLIC DOMAIN code, published under
 --              Creative Commons CC0 license
 -- Platform   : 
