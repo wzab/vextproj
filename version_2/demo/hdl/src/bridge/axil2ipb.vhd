@@ -86,6 +86,9 @@ entity axil2ipb is
     S_AXI_BRESP   : out std_logic_vector(1 downto 0);
     S_AXI_BVALID  : out std_logic;
     S_AXI_BREADY  : in  std_logic;
+    -- AWPROT and ARPROT - required by Altera
+    --S_AXI_ARPROT  : in  std_logic_vector(2 downto 0);
+    --S_AXI_AWPROT  : in  std_logic_vector(2 downto 0);
     -- Here we have the IPbus ports
     ipb_clk       : out std_logic;
     ipb_rst       : out std_logic;
