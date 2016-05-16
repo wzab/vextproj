@@ -202,44 +202,52 @@ proc handle_exec {ablock pdir line} {
 proc handle_git_local {ablock pdir line} {
     upvar $ablock block
     lassign $line clone_dir commit_or_tag_id exported_dir strip_num
-    exec "rm -rf ext_src"
-    exec "mkdir ext_src"
+    set old_dir [ pwd ]
+    cd $pdir
+    file delete -force -- "ext_src"
+    file mkdir "ext_src"
     #Prepare the git command
     set strip_cmd ""
     if { $strip_num ne ""} {
 	append strip_cmd " --strip-components=$strip_num"
     }
     set git_cmd "( cd $clone_dir ; git archive --format tar $commit_or_tag_id $exported_dir ) | ( cd ext_src ; tar -xf - $strip_cmd )"
-    exec $git_cmd
+    exec bash -c "$svn_cmd"
+    cd $old_dir
 }
 
 proc handle_git_remote {ablock pdir line} {
     upvar $ablock block
     lassign $line repository_url tag_id exported_dir strip_num
-    exec "rm -rf ext_src"
-    exec "mkdir ext_src"
+    set old_dir [ pwd ]
+    cd $pdir
+    file delete -force -- "ext_src"
+    file mkdir "ext_src"
     #Prepare the git command
     set strip_cmd ""
     if { $strip_num ne ""} {
 	append strip_cmd " --strip-components=$strip_num"
     }
     set git_cmd "git archive --format tar --remote $repository_url $tag_id $exported_dir ) | ( cd ext_src ; tar -xf - $strip_cmd )"
-    
-    exec $git_cmd
+    exec bash -c "$svn_cmd"
+    cd $old_dir
 }
 
 proc handle_svn {ablock pdir line} {
     upvar $ablock block
     lassign $line repository_with_path revision
-    exec "rm -rf ext_src"
-    exec "mkdir ext_src"
+    set old_dir [ pwd ]
+    cd $pdir
+    file delete -force -- "ext_src"
+    file mkdir "ext_src"
     #Prepare the SVN command
     set rev_cmd ""
     if { $revision ne ""} {
 	append rev_cmd " -r $revision"
     }
     set svn_cmd "( cd ext_src ; svn export $rev_cmd $repository_with_path )"
-    exec $svn_cmd
+    exec bash -c "$svn_cmd"
+    cd $old_dir
 }
 
 
