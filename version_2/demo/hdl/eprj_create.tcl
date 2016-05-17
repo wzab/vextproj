@@ -198,6 +198,59 @@ proc handle_exec {ablock pdir line} {
     cd $old_dir
 }	
 
+# Handlers for VCS systems
+proc handle_git_local {ablock pdir line} {
+    upvar $ablock block
+    lassign $line clone_dir commit_or_tag_id exported_dir strip_num
+    set old_dir [ pwd ]
+    cd $pdir
+    file delete -force -- "ext_src"
+    file mkdir "ext_src"
+    #Prepare the git command
+    set strip_cmd ""
+    if { $strip_num ne ""} {
+	append strip_cmd " --strip-components=$strip_num"
+    }
+    set git_cmd "( cd $clone_dir ; git archive --format tar $commit_or_tag_id $exported_dir ) | ( cd ext_src ; tar -xf - $strip_cmd )"
+    exec bash -c "$git_cmd"
+    cd $old_dir
+}
+
+proc handle_git_remote {ablock pdir line} {
+    upvar $ablock block
+    lassign $line repository_url tag_id exported_dir strip_num
+    set old_dir [ pwd ]
+    cd $pdir
+    file delete -force -- "ext_src"
+    file mkdir "ext_src"
+    #Prepare the git command
+    set strip_cmd ""
+    if { $strip_num ne ""} {
+	append strip_cmd " --strip-components=$strip_num"
+    }
+    set git_cmd "( git archive --format tar --remote $repository_url $tag_id $exported_dir ) | ( cd ext_src ; tar -xf - $strip_cmd )"
+    exec bash -c "$git_cmd"
+    cd $old_dir
+}
+
+proc handle_svn {ablock pdir line} {
+    upvar $ablock block
+    lassign $line repository_with_path revision
+    set old_dir [ pwd ]
+    cd $pdir
+    file delete -force -- "ext_src"
+    file mkdir "ext_src"
+    #Prepare the SVN command
+    set rev_cmd ""
+    if { $revision ne ""} {
+	append rev_cmd " -r $revision"
+    }
+    set svn_cmd "( cd ext_src ; svn export $rev_cmd $repository_with_path )"
+    exec bash -c "$svn_cmd"
+    cd $old_dir
+}
+
+
 #Line handling procedure
 proc handle_line { ablock pdir line } {
     upvar $ablock block
@@ -217,6 +270,9 @@ proc handle_line { ablock pdir line } {
 	xdc { handle_xdc block $pdir $rest}
 	xdc_ooc { handle_xdc_ooc block $pdir $rest}
 	exec { handle_exec block $pdir $rest}
+	git_local {handle_git_local block $pdir $rest}
+	git_remote {handle_git_remote block $pdir $rest}
+	svn {handle_svn block $pdir $rest}
 	default {
 	    error "Unknown line of type: $type"
 	}

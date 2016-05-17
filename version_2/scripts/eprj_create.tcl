@@ -212,7 +212,7 @@ proc handle_git_local {ablock pdir line} {
 	append strip_cmd " --strip-components=$strip_num"
     }
     set git_cmd "( cd $clone_dir ; git archive --format tar $commit_or_tag_id $exported_dir ) | ( cd ext_src ; tar -xf - $strip_cmd )"
-    exec bash -c "$svn_cmd"
+    exec bash -c "$git_cmd"
     cd $old_dir
 }
 
@@ -228,8 +228,8 @@ proc handle_git_remote {ablock pdir line} {
     if { $strip_num ne ""} {
 	append strip_cmd " --strip-components=$strip_num"
     }
-    set git_cmd "git archive --format tar --remote $repository_url $tag_id $exported_dir ) | ( cd ext_src ; tar -xf - $strip_cmd )"
-    exec bash -c "$svn_cmd"
+    set git_cmd "( git archive --format tar --remote $repository_url $tag_id $exported_dir ) | ( cd ext_src ; tar -xf - $strip_cmd )"
+    exec bash -c "$git_cmd"
     cd $old_dir
 }
 
