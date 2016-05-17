@@ -74,6 +74,26 @@ Additionally there are two lines with special meaning:
   vhdl xil_defaultlib lfsr_test_b_stub.vhd
   ```
 
+The newest version supports also sources exported from Version Control System (VCS) repositories. There are three commands allowing to import sources from GIT or SVN repositories:
+
+1. git\_remote repository\_url tag\_name [exported\_directory [stripped\_comp\_num]]
+
+ That command downloads the whole tree or the subtree defined by the exported_directory (e.g., "rtl/module_1") from the remote repository.
+ The version is defined by the tag_name (it should be "HEAD" for the newest version). The downloaded sources are located in the ext_src directory in the directory in which current EPRJ file is located.
+ We may strip defined number of the exported path components using the stripped_comp_num (e.g., for "rtl/module_1" the value of 1 will strip "rtl", the value of 2 will strip "rtl/module_1") so that we can avoid having too complex paths.
+ This command works only with git servers and protocols that support "git archive" command (e.g., free github doesn't support it while gitlab supports).
+
+1. git\_local clone\_directory commit\_or\_tag\_name [exported\_directory [stripped\_comp\_num]]
+
+ The second command may be used for local git repositories (e.g., clones of the repositories kept on servers that do not support "git archive", like github).
+ It is also the only option if we want to use the version defined by the commit ID without any tag attached.
+ Except of that it works similarly to the first command.
+
+1. svn repository\_url\_with\_exported\_path [revision]
+   
+ The third version is dedicated for repositories located on the SVN servers. In their case the repository URL should include the exported directory.
+ If the revision field is empty, then the newest version is exported.
+
 Of course one can easily extend this list, modifying the eprj_create.tcl script. 
 The line type is detected in the handle\_line procedure, and separate handlers are provided for different lines.
 The _include_ and _ooc_ lines are handled directly in the _read\_prj_ procedure.
