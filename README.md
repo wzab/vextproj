@@ -7,6 +7,10 @@ For operation with VCS (especially GIT) it is important, that you can build a hi
 having the flat structure of directories (one directory for each reusable component, all at the same level).
 This allows to avoid using of submodules.
 
+*Important remark*
+
+*Vextproj is intended to be used on Linux machines. I've successfully bult a simple demo (version\_2/demo\_wb/hdl) on a Windows machine, but the VCS related lines and "exec" line probably won't work on a Windows machine. I'm sorry, but I simply don't use Windows for serious FPGA developmen.*
+
 # EPRJ file format
 The description below describes the format used by the version 2 of the environment, which supports OOC compilation
 of selected parts of the design.
