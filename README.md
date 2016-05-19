@@ -51,7 +51,7 @@ The EPRJ file may contain the following lines:
 
   This line adds the XDC constraints file to the project
 
-*	xdc_ooc
+*	xdc_ooc file\_name
 
   This line adds the XDC OOC constraints file to the project (only to the blocks selected for OOC synthesis)
 
