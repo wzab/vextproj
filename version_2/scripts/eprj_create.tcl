@@ -10,7 +10,7 @@ set origin_dir "."
 
 # Check the Vivado version
 set viv_version [ version -short ]
-if {[ string compare $viv_version $eprj_vivado_version ] == 0} {
+if {[ string compare $viv_version $eprj_vivado_version ] != 0} {
   error "Wrong Vivado version. Expected: $eprj_vivado_version , found $viv_version"
 }
 
