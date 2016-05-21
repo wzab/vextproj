@@ -98,6 +98,17 @@ The newest version supports also sources exported from Version Control System (V
  The third version is dedicated for repositories located on the SVN servers. In their case the repository URL should include the exported directory.
  If the revision field is empty, then the newest version is exported.
 
+ For example, to use sources of the OpenCores I2C controller, you should create a subdirectory in your GIT controlled project tree containing `.gitignore` file with `extsrc/` line, and the `main.eprj` file with contents given below:
+ 
+ ```
+ svn  http://opencores.org/ocsvn/i2c/i2c/trunk/rtl/vhdl 76
+ vhdl work ext_src/vhdl/i2c_master_bit_ctrl.vhd 
+ vhdl work ext_src/vhdl/i2c_master_byte_ctrl.vhd 
+ vhdl work ext_src/vhdl/i2c_master_top.vhd
+ ```
+ 
+ Of course the above example requires that you have the OpenCores account allowing you to download the sources from OC SVN.
+
 Of course one can easily extend this list, modifying the eprj_create.tcl script. 
 The line type is detected in the handle\_line procedure, and separate handlers are provided for different lines.
 The _include_ and _ooc_ lines are handled directly in the _read\_prj_ procedure.
