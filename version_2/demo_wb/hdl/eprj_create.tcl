@@ -10,12 +10,13 @@ set origin_dir "."
 
 # Check the Vivado version
 set viv_version [ version -short ]
+set ver_cmp_res [ string compare $viv_version $eprj_vivado_version ]
 if { $eprj_vivado_version_allow_upgrade } {
-    if [ expr $viv_version < $eprj_vivado_version ] {
-	error "Wrong Vivado version. Expected: $eprj_vivado_version , found $viv_version"
+    if [ expr $ver_cmp_res < 0 ]{
+	error "Wrong Vivado version. Expected: $eprj_vivado_version or higher, found $viv_version"
     }
 } else {
-    if [ expr $viv_version != $eprj_vivado_version ] {
+    if [ expr $ver_cmp_res != 0 ] {
 	error "Wrong Vivado version. Expected: $eprj_vivado_version , found $viv_version"
     }
 }
@@ -89,7 +90,7 @@ proc handle_xci {ablock pdir line} {
     set_property "library" $lib $file_obj
 }
 
-proc handle_xci {ablock pdir line} {
+proc handle_xcix {ablock pdir line} {
     upvar $ablock block
     #Handle XCIX file
     lassign $line lib fname
@@ -154,7 +155,7 @@ proc handle_bd {ablock pdir line} {
 proc handle_mif {ablock pdir line} {
     upvar $ablock block
     #Handle MIF file
-    lassign $line fname
+    lassign $line lib fname
     set file_obj [add_file_sources block $pdir $fname]
     set_property "file_type" "Memory Initialization Files" $file_obj
     set_property "library" $lib $file_obj
@@ -268,8 +269,8 @@ proc handle_line { ablock pdir line } {
 	
 	xci { handle_xci block $pdir $rest}
 	xcix { handle_xcix block $pdir $rest}
-	header { handle_header block $pdir $rest}
-        global_header { handle_global_header block $pdir $rest}
+	header { handle_verilog_header block $pdir $rest}
+        global_header { handle_global_verilog_header block $pdir $rest}
 	sys_verilog { handle_sys_verilog block $pdir $rest}
 	verilog { handle_verilog block $pdir $rest}
 	mif { handle_mif block $pdir $rest}
