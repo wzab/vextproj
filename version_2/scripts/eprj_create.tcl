@@ -12,7 +12,7 @@ set origin_dir "."
 set viv_version [ version -short ]
 set ver_cmp_res [ string compare $viv_version $eprj_vivado_version ]
 if { $eprj_vivado_version_allow_upgrade } {
-    if [ expr $ver_cmp_res < 0 ]{
+    if [ expr $ver_cmp_res < 0 ] {
 	error "Wrong Vivado version. Expected: $eprj_vivado_version or higher, found $viv_version"
     }
 } else {
@@ -35,8 +35,8 @@ set_property "simulator_language" $eprj_simulator_language $obj
 set_property "target_language" $eprj_target_language $obj
 
 # Create the global variable which will keep the list of the OOC synthesis runs
-global vextproj_oos_synth_runs
-set vextproj_oos_synth_runs [list ]
+global vextproj_ooc_synth_runs
+set vextproj_ooc_synth_runs [list ]
 
 # The project reading procedure operates on objects storing the files
 proc eprj_create_block {ablock mode setname } {
@@ -315,11 +315,11 @@ proc handle_ooc { ablock pdir line } {
     set ooc_synth_run_name ${blksetname}_synth_1
     if {[string equal [get_runs -quiet ${ooc_synth_run_name}] ""]} {
 	create_run -name ${ooc_synth_run_name} -part $eprj_part -flow {$eprj_flow} -strategy $eprj_synth_strategy -constrset $blksetname
-	lappend vextproj_ooc_synth_runs ${ooc_synth_run_name}
     } else {
 	set_property strategy $eprj_synth_strategy [get_runs ${ooc_synth_run_name}]
 	set_property flow $eprj_synth_flow [get_runs ${ooc_synth_run_name}]
     }
+    lappend vextproj_ooc_synth_runs ${ooc_synth_run_name}
     set_property constrset $blksetname [get_runs ${ooc_synth_run_name}]
     set_property part $eprj_part [get_runs ${ooc_synth_run_name}]
     # Create implementation run for the blockset (if not found)
@@ -349,8 +349,8 @@ proc read_prj { ablock prj } {
     #allow to use just the directory names. In this case add
     #the "/main.eprj" to it
     if {[file isdirectory $prj]} {
-       append prj "/main.eprj"
-       puts "Added default main.eprj to the directory name: $prj"
+	append prj "/main.eprj"
+	puts "Added default main.eprj to the directory name: $prj"
     }
     if {[file exists $prj]} {
 	puts "\tReading PRJ file: $prj"
@@ -380,7 +380,7 @@ proc read_prj { ablock prj } {
 	    }
 	}
     } else {
-      error "Requested file $prj is not available!"
+	error "Requested file $prj is not available!"
     }
 }
 
@@ -391,10 +391,10 @@ set_property "top" $eprj_top_entity  $main_block(srcset)
 update_compile_order -fileset sources_1
 # Create 'synth_1' run (if not found)
 if {[string equal [get_runs -quiet synth_1] ""]} {
-  create_run -name synth_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_synth_strategy -constrset constrs_1
+    create_run -name synth_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_synth_strategy -constrset constrs_1
 } else {
-  set_property strategy $eprj_synth_strategy [get_runs synth_1]
-  set_property flow $eprj_synth_flow [get_runs synth_1]
+    set_property strategy $eprj_synth_strategy [get_runs synth_1]
+    set_property flow $eprj_synth_flow [get_runs synth_1]
 }
 set obj [get_runs synth_1]
 
@@ -403,10 +403,10 @@ current_run -synthesis [get_runs synth_1]
 
 # Create 'impl_1' run (if not found)
 if {[string equal [get_runs -quiet impl_1] ""]} {
-  create_run -name impl_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_impl_strategy -constrset constrs_1 -parent_run synth_1
+    create_run -name impl_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_impl_strategy -constrset constrs_1 -parent_run synth_1
 } else {
-  set_property strategy $eprj_impl_strategy [get_runs impl_1]
-  set_property flow $eprj_impl_flow [get_runs impl_1]
+    set_property strategy $eprj_impl_strategy [get_runs impl_1]
+    set_property flow $eprj_impl_flow [get_runs impl_1]
 }
 set obj [get_runs impl_1]
 
@@ -414,7 +414,7 @@ set obj [get_runs impl_1]
 current_run -implementation [get_runs impl_1]
 
 # Write the list of the OOC synthesis runs to the file
-set file_ooc_runs [open "oos_synth_runs.txt" "w"]
+set file_ooc_runs [open "ooc_synth_runs.txt" "w"]
 puts $file_ooc_runs $vextproj_ooc_synth_runs
 close $file_ooc_runs
 
