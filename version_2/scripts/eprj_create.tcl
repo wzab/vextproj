@@ -419,6 +419,14 @@ puts $file_ooc_runs $vextproj_ooc_synth_runs
 close $file_ooc_runs
 
 puts "INFO: Project created:$eprj_proj_name"
+
+# Create the Tcl file with the initial state of the project
+# In theory it should be enough to write it now:
+#   write_project_tcl -force -no_copy_sources {initial_state.tcl}
+# But unfortunately it will differ significantly from the Tcl file created after opening of the saved
+# XPR file.
+# Therefore we delegate it to the another script...
+
 #launch_runs synth_1
 #wait_on_run synth_1
 #launch_runs impl_1
