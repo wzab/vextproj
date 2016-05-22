@@ -10,10 +10,15 @@ set origin_dir "."
 
 # Check the Vivado version
 set viv_version [ version -short ]
-if [ expr $viv_version != $eprj_vivado_version ] {
-  error "Wrong Vivado version. Expected: $eprj_vivado_version , found $viv_version"
+if { $eprj_vivado_version_allow_upgrade } {
+    if [ expr $viv_version < $eprj_vivado_version ] {
+	error "Wrong Vivado version. Expected: $eprj_vivado_version , found $viv_version"
+    }
+} else {
+    if [ expr $viv_version != $eprj_vivado_version ] {
+	error "Wrong Vivado version. Expected: $eprj_vivado_version , found $viv_version"
+    }
 }
-
 # Create project
 create_project $eprj_proj_name ./$eprj_proj_name
 
@@ -27,6 +32,10 @@ set_property "part" $eprj_part $obj
 set_property "default_lib" $eprj_default_lib $obj
 set_property "simulator_language" $eprj_simulator_language $obj
 set_property "target_language" $eprj_target_language $obj
+
+# Create the global variable which will keep the list of the OOC synthesis runs
+global vextproj_oos_synth_runs
+set vextproj_oos_synth_runs [list ]
 
 # The project reading procedure operates on objects storing the files
 proc eprj_create_block {ablock mode setname } {
@@ -286,7 +295,8 @@ proc handle_ooc { ablock pdir line } {
     global eprj_synth_flow
     global eprj_flow
     global eprj_part
-    
+    global vextproj_ooc_synth_runs
+
     upvar $ablock block
     lassign $line type stub fname blksetname
     #Create the new block of type OOC and continue parsing in it
@@ -301,24 +311,27 @@ proc handle_ooc { ablock pdir line } {
     set_property TOP $blksetname [get_filesets $blksetname]
     update_compile_order -fileset $blksetname
     #Create synthesis run for the blockset (if not found)
-    if {[string equal [get_runs -quiet ${blksetname}_synth_1] ""]} {
-	create_run -name ${blksetname}_synth_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_synth_strategy -constrset $blksetname
+    set ooc_synth_run_name ${blksetname}_synth_1
+    if {[string equal [get_runs -quiet ${ooc_synth_run_name}] ""]} {
+	create_run -name ${ooc_synth_run_name} -part $eprj_part -flow {$eprj_flow} -strategy $eprj_synth_strategy -constrset $blksetname
+	lappend vextproj_ooc_synth_runs ${ooc_synth_run_name}
     } else {
-	set_property strategy $eprj_synth_strategy [get_runs ${blksetname}_synth_1]
-	set_property flow $eprj_synth_flow [get_runs ${blksetname}_synth_1]
+	set_property strategy $eprj_synth_strategy [get_runs ${ooc_synth_run_name}]
+	set_property flow $eprj_synth_flow [get_runs ${ooc_synth_run_name}]
     }
-    set_property constrset $blksetname [get_runs ${blksetname}_synth_1]
-    set_property part $eprj_part [get_runs ${blksetname}_synth_1]
+    set_property constrset $blksetname [get_runs ${ooc_synth_run_name}]
+    set_property part $eprj_part [get_runs ${ooc_synth_run_name}]
     # Create implementation run for the blockset (if not found)
-    if {[string equal [get_runs -quiet ${blksetname}_impl_1] ""]} {
-	create_run -name impl_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_impl_strategy -constrset $blksetname -parent_run ${blksetname}_synth_1
+    set ooc_impl_run_name ${blksetname}_impl_1
+    if {[string equal [get_runs -quiet ${ooc_impl_run_name}] ""]} {
+	create_run -name impl_1 -part $eprj_part -flow {$eprj_flow} -strategy $eprj_impl_strategy -constrset $blksetname -parent_run ${ooc_synth_run_name}
     } else {
-	set_property strategy $eprj_impl_strategy [get_runs ${blksetname}_impl_1]
-	set_property flow $eprj_impl_flow [get_runs ${blksetname}_impl_1]
+	set_property strategy $eprj_impl_strategy [get_runs ${ooc_impl_run_name}]
+	set_property flow $eprj_impl_flow [get_runs ${ooc_impl_run_name}]
     }
-    set_property constrset $blksetname [get_runs ${blksetname}_impl_1]
-    set_property part $eprj_part [get_runs ${blksetname}_impl_1]
-    set_property include_in_archive "0" [get_runs ${blksetname}_impl_1]
+    set_property constrset $blksetname [get_runs ${ooc_impl_run_name}]
+    set_property part $eprj_part [get_runs ${ooc_impl_run_name}]
+    set_property include_in_archive "0" [get_runs ${ooc_impl_run_name}]
 }
 
 # Prepare the main block
@@ -398,6 +411,11 @@ set obj [get_runs impl_1]
 
 # set the current impl run
 current_run -implementation [get_runs impl_1]
+
+# Write the list of the OOC synthesis runs to the file
+set file_ooc_runs [open "oos_synth_runs.txt" "w"]
+puts $file_ooc_runs $vextproj_ooc_synth_runs
+close $file_ooc_runs
 
 puts "INFO: Project created:$eprj_proj_name"
 #launch_runs synth_1

@@ -9,8 +9,12 @@ reset_run synth_1
 # Two lines below are the workaround for the problem reported here:
 # https://forums.xilinx.com/t5/Synthesis/Vivado-incorrect-automatic-compilation-order-in-OOC-synthesis/td-p/698067
 # In fact there should be the list of the OOC runs created by the eprj_create.tcl
-# script. At the moment this list is created manually...
-set ooc_runs { lfsr_test_a_synth_1 lfsr_test_b_synth_1 }
+# script. At the moment this list must be read from the file "ooc_synth_runs.txt"
+# created by the eprj_create.tcl
+set file_ooc_runs [open "oos_synth_runs.txt" "r"]
+set $ooc_runs [read $file_ooc_runs]
+close $file_ooc_runs
+
 foreach { run } $ooc_runs {
    reset_run $run
 }
