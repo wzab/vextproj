@@ -41,6 +41,8 @@ set vextproj_ooc_synth_runs [list ]
 # The project reading procedure operates on objects storing the files
 proc eprj_create_block {ablock mode setname } {
     upvar $ablock block    
+    #Set the last file_obj initially to "none"
+    set block(last_file_obj) "error"
     #Set the mode of the block
     #may be either IC - in context or OOC - out of context
     set block(mode) $mode
@@ -78,6 +80,7 @@ proc add_file_sources {ablock pdir fname} {
     }
     add_files -norecurse -fileset $block(srcset) $nfile
     set file_obj [get_files -of_objects $block(srcset) $nfile]
+    set block(last_file_obj) $file_obj
     return $file_obj
 }
 
@@ -185,12 +188,40 @@ proc handle_xdc_ooc {ablock pdir line} {
     }
     if {![string match -nocase $block(mode) "OOC"]} {
 	puts "Ignored file $nfile in IC mode"
+	#Clear "last file object" in the block array
+	set block(last_file_obj) "none"
     } else {
 	add_files -norecurse -fileset $block(cnstrset) $nfile
 	set file_obj [get_files -of_objects $block(cnstrset) $nfile]
 	set_property "file_type" "XDC" $file_obj
 	set_property USED_IN {out_of_context synthesis implementation} $file_obj
     }	
+}
+
+proc handle_prop {ablock pdir line} {
+    upvar $ablock block
+    if [string match $block(last_file_obj) "error"] {
+	error "I don't know to which file apply the property $line" 
+    } elseif [string match $block(last_file_obj) "none"] {
+	puts "Property ignored $line" 
+    } else {
+	lassign $line property value
+	set_property $property $value $block(last_file_obj)
+    }    
+}
+
+proc handle_propadd {ablock pdir line} {
+    upvar $ablock block
+    if [string match $block(last_file_obj) "error"] {
+	error "I don't know to which file apply the property $line" 
+    } elseif [string match $block(last_file_obj) "none"] {
+	puts "Property ignored $line" 
+    } else {
+	lassign $line property value
+	set old_val [ get_property $property $block(last_file_obj) ]
+	lappend old_val $value
+	set_property $property $old_val $block(last_file_obj)
+    }    
 }
 
 proc handle_exec {ablock pdir line} {
@@ -277,6 +308,9 @@ proc handle_line { ablock pdir line } {
 	bd { handle_bd block $pdir $rest}
 	vhdl { handle_vhdl block $pdir $rest}
 
+	prop { handle_prop block $pdir $rest}
+	propadd { handle_propadd block $pdir $rest}
+	
 	xdc { handle_xdc block $pdir $rest}
 	xdc_ooc { handle_xdc_ooc block $pdir $rest}
 	exec { handle_exec block $pdir $rest}
@@ -345,7 +379,9 @@ eprj_create_block main_block "IC" ""
 #to the location of the PRJ file.
 proc read_prj { ablock prj } {
     upvar $ablock block
-    parray block
+    #parray block
+    #Clear information about the "last file_obj" to avoid wrong assignment of properties
+    set block(last_file_obj) "error"
     #allow to use just the directory names. In this case add
     #the "/main.eprj" to it
     if {[file isdirectory $prj]} {
@@ -371,7 +407,9 @@ proc read_prj { ablock prj } {
 		lassign $line type fname
 		if {[string match -nocase $type "include"]} {
                     puts "\tIncluding PRJ file: $prj_dir/$fname"
-		    read_prj block $prj_dir/$fname 
+		    read_prj block $prj_dir/$fname
+		    # Clear information about the last file_obj to avoid wrong assignment of properties
+		    set block(last_file_obj) "error"
 		} elseif {[string match -nocase $type "ooc"]} {
 		    handle_ooc block $prj_dir $line
 		} else {
