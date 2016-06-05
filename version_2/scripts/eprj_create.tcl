@@ -333,6 +333,11 @@ proc handle_ooc { ablock pdir line } {
     global vextproj_ooc_synth_runs
 
     upvar $ablock block
+    #The OOC blocks can't be nested
+    #detect the attempt to nest the block and return an error
+    if {[string match -nocase $block(mode) "OOC"]} {
+	error "The OOC blocks can't be nested: $line"
+    }    
     lassign $line type stub fname blksetname
     #Create the new block of type OOC and continue parsing in it
     array set ooc_block {}
