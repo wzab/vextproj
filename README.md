@@ -54,6 +54,16 @@ The EPRJ file may contain the following lines:
 *	xdc_ooc file\_name
 
   This line adds the XDC OOC constraints file to the project (only to the blocks selected for OOC synthesis)
+  
+*	prop property\_name property\_value
+
+  This line sets the particular property of the last source or constraints file to the given value
+
+*	propadd property\_name property\_value
+
+  This line adds the given value to the list of values of the particular property of the last source or constraints file
+
+  It is possible to use multiple "prop" or "propadd" lines in sequence below the source or constraints file
 
 *	exec file\_name
 	
