@@ -1,7 +1,7 @@
 # Script prepared by Wojciech M. Zabolotny (wzab<at>ise.pw.edu.pl) to
 # create a Vivado project from the hierarchical list of files
 # (extended project files).
-# This files are published as PUBLIC DOMAIN
+# This file is published as PUBLIC DOMAIN
 # 
 # Source the project settings
 source proj_def.tcl
