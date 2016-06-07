@@ -310,7 +310,7 @@ proc handle_line { ablock pdir line } {
 
 	prop { handle_prop block $pdir $rest}
 	propadd { handle_propadd block $pdir $rest}
-	
+        ooc { handle_ooc block $pdir $line }	
 	xdc { handle_xdc block $pdir $rest}
 	xdc_ooc { handle_xdc_ooc block $pdir $rest}
 	exec { handle_exec block $pdir $rest}
@@ -415,8 +415,6 @@ proc read_prj { ablock prj } {
 		    read_prj block $prj_dir/$fname
 		    # Clear information about the last file_obj to avoid wrong assignment of properties
 		    set block(last_file_obj) "error"
-		} elseif {[string match -nocase $type "ooc"]} {
-		    handle_ooc block $prj_dir $line
 		} else {
 		    handle_line block $prj_dir $line
 		}
