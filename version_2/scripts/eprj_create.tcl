@@ -72,7 +72,7 @@ proc eprj_create_block {ablock mode setname } {
 }
 
 #Add file to the sources fileset
-proc add_file_sources {ablock pdir fname} {
+proc add_file_sources {ablock args pdir fname} {
     upvar $ablock block
     set nfile [file normalize "$pdir/$fname"]
     if {! [file exists $nfile]} {
@@ -81,91 +81,96 @@ proc add_file_sources {ablock pdir fname} {
     add_files -norecurse -fileset $block(srcset) $nfile
     set file_obj [get_files -of_objects $block(srcset) $nfile]
     set block(last_file_obj) $file_obj
+    #Check if the arguments contain "sim" and set the "simulation" properties if necessary
+    if [expr [lsearch $args "sim"] >= 0] {
+	set_property "used_in" "simulation" $file_obj
+	set_property "used_in_synthesis" "0" $file_obj
+    }
     return $file_obj
 }
 
-proc handle_xci {ablock pdir line} {
+proc handle_xci {ablock args pdir line} {
     upvar $ablock block
     #Handle XCI file
     lassign $line lib fname
-    set file_obj [add_file_sources block $pdir $fname]
+    set file_obj [add_file_sources block $args $pdir $fname]
     #set_property "synth_checkpoint_mode" "Singular" $file_obj
     set_property "library" $lib $file_obj
 }
 
-proc handle_xcix {ablock pdir line} {
+proc handle_xcix {ablock args pdir line} {
     upvar $ablock block
     #Handle XCIX file
     lassign $line lib fname
-    set file_obj [add_file_sources block $pdir $fname]
+    set file_obj [add_file_sources block $args $pdir $fname]
     #set_property "synth_checkpoint_mode" "Singular" $file_obj
     set_property "library" $lib $file_obj
     export_ip_user_files -of_objects  $file_obj -force -quiet
 }
 
-proc handle_vhdl {ablock pdir line} {
+proc handle_vhdl {ablock args pdir line} {
     upvar $ablock block
     #Handle VHDL file
     lassign $line lib fname
-    set file_obj [add_file_sources block $pdir $fname]
+    set file_obj [add_file_sources block $args $pdir $fname]
     set_property "file_type" "VHDL" $file_obj
     set_property "library" $lib $file_obj
 }
 
-proc handle_verilog {ablock pdir line} {
+proc handle_verilog {ablock args pdir line} {
     upvar $ablock block
     #Handle Verilog file
     lassign $line fname
-    set file_obj [add_file_sources block $pdir $fname]
+    set file_obj [add_file_sources block $args $pdir $fname]
     set_property "file_type" "Verilog" $file_obj
 }
 
-proc handle_sys_verilog {ablock pdir line} {
+proc handle_sys_verilog {ablock args pdir line} {
     upvar $ablock block
     #Handle SystemVerilog file
     lassign $line fname
-    set file_obj [add_file_sources block $pdir $fname]
+    set file_obj [add_file_sources block $args $pdir $fname]
     set_property "file_type" "SystemVerilog" $file_obj
 }
 
-proc handle_verilog_header {ablock pdir line} {
+proc handle_verilog_header {ablock args pdir line} {
     upvar $ablock block
     #Handle SystemVerilog file
     lassign $line fname
-    set file_obj [add_file_sources block $pdir $fname]
+    set file_obj [add_file_sources block $args $pdir $fname]
     set_property "file_type" "Verilog Header" $file_obj
 }
 
-proc handle_global_verilog_header {ablock pdir line} {
+proc handle_global_verilog_header {ablock args pdir line} {
     upvar $ablock block
     #Handle Global Verilog Header file
     lassign $line fname
-    set file_obj [add_file_sources block $pdir $fname]
+    set file_obj [add_file_sources block $args $pdir $fname]
     set_property "file_type" "Verilog Header" $file_obj
     set_property is_global_include true $file_obj
 }
 
-proc handle_bd {ablock pdir line} {
+proc handle_bd {ablock args pdir line} {
     upvar $ablock block
     #Handle BD file
     lassign $line fname
-    set file_obj [add_file_sources block $pdir $fname]
+    set file_obj [add_file_sources block $args $pdir $fname]
     if { ![get_property "is_locked" $file_obj] } {
 	set_property "generate_synth_checkpoint" "0" $file_obj
     }
 }
 
-proc handle_mif {ablock pdir line} {
+proc handle_mif {ablock args pdir line} {
     upvar $ablock block
     #Handle MIF file
     lassign $line lib fname
-    set file_obj [add_file_sources block $pdir $fname]
+    set file_obj [add_file_sources block $args $pdir $fname]
     set_property "file_type" "Memory Initialization Files" $file_obj
     set_property "library" $lib $file_obj
     #set_property "synth_checkpoint_mode" "Singular" $file_obj
 }
 
-proc handle_xdc {ablock pdir line} {
+proc handle_xdc {ablock args pdir line} {
     upvar $ablock block
     #Handle XDC file
     lassign $line fname
@@ -178,7 +183,7 @@ proc handle_xdc {ablock pdir line} {
     set_property "file_type" "XDC" $file_obj
 }	
 
-proc handle_xdc_ooc {ablock pdir line} {
+proc handle_xdc_ooc {ablock args pdir line} {
     upvar $ablock block
     #Handle XDC_OOC file
     lassign $line fname
@@ -198,7 +203,7 @@ proc handle_xdc_ooc {ablock pdir line} {
     }	
 }
 
-proc handle_prop {ablock pdir line} {
+proc handle_prop {ablock args pdir line} {
     upvar $ablock block
     if [string match $block(last_file_obj) "error"] {
 	error "I don't know to which file apply the property $line" 
@@ -210,7 +215,7 @@ proc handle_prop {ablock pdir line} {
     }    
 }
 
-proc handle_propadd {ablock pdir line} {
+proc handle_propadd {ablock args pdir line} {
     upvar $ablock block
     if [string match $block(last_file_obj) "error"] {
 	error "I don't know to which file apply the property $line" 
@@ -224,7 +229,7 @@ proc handle_propadd {ablock pdir line} {
     }    
 }
 
-proc handle_exec {ablock pdir line} {
+proc handle_exec {ablock args pdir line} {
     upvar $ablock block
     #Handle EXEC line
     lassign $line fname
@@ -240,7 +245,7 @@ proc handle_exec {ablock pdir line} {
 }	
 
 # Handlers for VCS systems
-proc handle_git_local {ablock pdir line} {
+proc handle_git_local {ablock args pdir line} {
     upvar $ablock block
     lassign $line clone_dir commit_or_tag_id exported_dir strip_num
     set old_dir [ pwd ]
@@ -257,7 +262,7 @@ proc handle_git_local {ablock pdir line} {
     cd $old_dir
 }
 
-proc handle_git_remote {ablock pdir line} {
+proc handle_git_remote {ablock args pdir line} {
     upvar $ablock block
     lassign $line repository_url tag_id exported_dir strip_num
     set old_dir [ pwd ]
@@ -274,7 +279,7 @@ proc handle_git_remote {ablock pdir line} {
     cd $old_dir
 }
 
-proc handle_svn {ablock pdir line} {
+proc handle_svn {ablock args pdir line} {
     upvar $ablock block
     lassign $line repository_with_path revision
     set old_dir [ pwd ]
@@ -291,39 +296,59 @@ proc handle_svn {ablock pdir line} {
     cd $old_dir
 }
 
+#Procedure exctracting the args from the text: "type[arg1,arg2,arg3]"
+#Returns the two-element list {type args}, where args is the list" {arg1 arg2 arg3}
+proc type_parse_args { type_args } {
+    regexp {([^\[]*)(\[(.*)\])*} $type_args whole_type type arg_part arg_list
+    if [string match arg_list ""] {
+	set args {}
+    } else {
+	set args [split $arg_list ","]
+    }
+    return [list $type $args]
+}
+
+
+# Array with line handlers, used by the line handling procedure
+array set line_handlers {
+    xci           handle_xci
+    xcix          handle_xcix
+    header        handle_verilog_header
+    global_header handle_global_verilog_header 
+    sys_verilog   handle_sys_verilog 
+    verilog       handle_verilog 
+    mif           handle_mif 
+    bd            handle_bd
+    vhdl          handle_vhdl
+    
+    prop          handle_prop
+    propadd       handle_propadd
+    ooc           handle_ooc
+    xdc           handle_xdc
+    xdc_ooc       handle_xdc_ooc
+    exec          handle_exec
+    git_local     handle_git_local
+    git_remote    handle_git_remote
+    svn           handle_svn 
+}
 
 #Line handling procedure
 proc handle_line { ablock pdir line } {
     upvar $ablock block
-    set rest [lassign $line type]
-    switch [string tolower $type] {
-	
-	xci { handle_xci block $pdir $rest}
-	xcix { handle_xcix block $pdir $rest}
-	header { handle_verilog_header block $pdir $rest}
-        global_header { handle_global_verilog_header block $pdir $rest}
-	sys_verilog { handle_sys_verilog block $pdir $rest}
-	verilog { handle_verilog block $pdir $rest}
-	mif { handle_mif block $pdir $rest}
-	bd { handle_bd block $pdir $rest}
-	vhdl { handle_vhdl block $pdir $rest}
-
-	prop { handle_prop block $pdir $rest}
-	propadd { handle_propadd block $pdir $rest}
-        ooc { handle_ooc block $pdir $line }	
-	xdc { handle_xdc block $pdir $rest}
-	xdc_ooc { handle_xdc_ooc block $pdir $rest}
-	exec { handle_exec block $pdir $rest}
-	git_local {handle_git_local block $pdir $rest}
-	git_remote {handle_git_remote block $pdir $rest}
-	svn {handle_svn block $pdir $rest}
-	default {
-	    error "Unknown line of type: $type"
-	}
-    }    
+    global line_handlers
+    set rest [lassign $line type_args]
+    #First we attempt to separate possible arguments from type
+    lassign [type_parse_args $type_args] type args
+    #Find the procedure to be called depending on the type of the line
+    set ptc [lindex [array get line_handlers [string tolower $type]] 1] 
+    if [ string equal $ptc "" ] {
+	error "Unknown line of type: $type"
+    } else {
+	$ptc block $args $pdir $rest	
+    }
 }
 
-proc handle_ooc { ablock pdir line } {
+proc handle_ooc { ablock args pdir line } {
     global eprj_impl_strategy
     global eprj_impl_flow
     global eprj_synth_strategy
@@ -338,7 +363,7 @@ proc handle_ooc { ablock pdir line } {
     if {[string match -nocase $block(mode) "OOC"]} {
 	error "The OOC blocks can't be nested: $line"
     }    
-    lassign $line type stub fname blksetname
+    lassign $line stub fname blksetname
     #Create the new block of type OOC and continue parsing in it
     array set ooc_block {}
     eprj_create_block ooc_block "OOC" $blksetname
