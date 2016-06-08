@@ -67,7 +67,7 @@ proc eprj_create_block {ablock mode setname } {
 	set block(srcset) [get_filesets $setname]
 	set block(cnstrset) [get_filesets $setname]
     } else {
-	error "The block mode must be either IC - in context, or OOC - out of context. The $mode value is unacceptable"
+	eprj_error block "The block mode must be either IC - in context, or OOC - out of context. The $mode value is unacceptable"
     }
 }
 
@@ -76,7 +76,7 @@ proc add_file_sources {ablock args pdir fname} {
     upvar $ablock block
     set nfile [file normalize "$pdir/$fname"]
     if {! [file exists $nfile]} {
-	error "Requested file $nfile is not available!"
+	eprj_error block "Requested file $nfile is not available!"
     }
     add_files -norecurse -fileset $block(srcset) $nfile
     set file_obj [get_files -of_objects $block(srcset) $nfile]
@@ -176,7 +176,7 @@ proc handle_xdc {ablock args pdir line} {
     lassign $line fname
     set nfile [file normalize "$pdir/$fname"]
     if {![file exists $nfile]} {
-	error "Requested file $nfile is not available!"
+	eprj_error block "Requested file $nfile is not available!"
     }
     add_files -norecurse -fileset $block(cnstrset) $nfile
     set file_obj [get_files -of_objects $block(cnstrset) $nfile]
@@ -189,7 +189,7 @@ proc handle_xdc_ooc {ablock args pdir line} {
     lassign $line fname
     set nfile [file normalize "$pdir/$fname"]
     if {![file exists $nfile]} {
-	error "Requested file $nfile is not available!"
+	eprj_error block "Requested file $nfile is not available!"
     }
     if {![string match -nocase $block(mode) "OOC"]} {
 	puts "Ignored file $nfile in IC mode"
@@ -206,7 +206,7 @@ proc handle_xdc_ooc {ablock args pdir line} {
 proc handle_prop {ablock args pdir line} {
     upvar $ablock block
     if [string match $block(last_file_obj) "error"] {
-	error "I don't know to which file apply the property $line" 
+	eprj_error block "I don't know to which file apply the property $line" 
     } elseif [string match $block(last_file_obj) "none"] {
 	puts "Property ignored $line" 
     } else {
@@ -218,7 +218,7 @@ proc handle_prop {ablock args pdir line} {
 proc handle_propadd {ablock args pdir line} {
     upvar $ablock block
     if [string match $block(last_file_obj) "error"] {
-	error "I don't know to which file apply the property $line" 
+	eprj_error block "I don't know to which file apply the property $line" 
     } elseif [string match $block(last_file_obj) "none"] {
 	puts "Property ignored $line" 
     } else {
@@ -235,7 +235,7 @@ proc handle_exec {ablock args pdir line} {
     lassign $line fname
     set nfile [file normalize "$pdir/$fname"]
     if {![file exists $nfile]} {
-	error "Requested file $nfile is not available!"
+	eprj_error block "Requested file $nfile is not available!"
     }
     #Execute the program in its directory
     set old_dir [ pwd ]
@@ -342,7 +342,7 @@ proc handle_line { ablock pdir line } {
     #Find the procedure to be called depending on the type of the line
     set ptc [lindex [array get line_handlers [string tolower $type]] 1] 
     if [ string equal $ptc "" ] {
-	error "Unknown line of type: $type"
+	eprj_error block "Unknown line of type: $type"
     } else {
 	$ptc block $args $pdir $rest	
     }
@@ -361,7 +361,7 @@ proc handle_ooc { ablock args pdir line } {
     #The OOC blocks can't be nested
     #detect the attempt to nest the block and return an error
     if {[string match -nocase $block(mode) "OOC"]} {
-	error "The OOC blocks can't be nested: $line"
+	eprj_error block "The OOC blocks can't be nested: $line"
     }    
     lassign $line stub fname blksetname
     #Create the new block of type OOC and continue parsing in it
@@ -370,7 +370,7 @@ proc handle_ooc { ablock args pdir line } {
     if {[string match -nocase $stub "noauto"]} {
 	set_property "use_blackbox_stub" "0" [get_filesets $blksetname]
     } elseif {![string match -nocase $stub "auto"]} {
-	error "OOC stub creation mode must be either 'auto' or 'noauto' not: $stub"
+	eprj_error block "OOC stub creation mode must be either 'auto' or 'noauto' not: $stub"
     }
     read_prj ooc_block $pdir/$fname
     set_property TOP $blksetname [get_filesets $blksetname]
@@ -403,6 +403,13 @@ proc handle_ooc { ablock args pdir line } {
 array set main_block {}
 eprj_create_block main_block "IC" ""
 
+# Procedure reporting the errors
+proc eprj_error { ablock message } {
+    upvar $ablock block
+    puts "ERROR in file: $block(file_name), line: $block(line_count)"
+    error $message
+}
+
 # Procedure below reads the source files from PRJ files, extended with
 # the "include file" statement
 #Important thing - path to the source files should be given relatively
@@ -428,9 +435,11 @@ proc read_prj { ablock prj } {
 	set prj_dir [ file dirname $prj ]
 	regsub -all {\"} $source_data {} source_data
 	set prj_lines [split $source_data "\n" ]
-	set line_count 0
+	#Set line counter and file name for error reporting function
+	set block(line_count) 0
+	set block(file_name) $prj
 	foreach line $prj_lines {
-	    incr line_count
+	    incr block(line_count)
 	    #Ignore empty and commented lines
 	    if {[llength $line] > 0 && ![string match -nocase "#*" $line]} {
 		#Detect the inlude line and ooc line
@@ -446,13 +455,16 @@ proc read_prj { ablock prj } {
 	    }
 	}
     } else {
-	error "Requested file $prj is not available!"
+	eprj_error block "Requested file $prj is not available!"
     }
 }
 
 
 # Read project definitions
-read_prj main_block $eprj_def_root 
+set main_block(file_name) ""
+set main_block(line_count) 0
+read_prj main_block $eprj_def_root
+
 set_property "top" $eprj_top_entity  $main_block(srcset)
 update_compile_order -fileset sources_1
 # Create 'synth_1' run (if not found)
