@@ -38,6 +38,19 @@ set_property "target_language" $eprj_target_language $obj
 global vextproj_ooc_synth_runs
 set vextproj_ooc_synth_runs [list ]
 
+# The procedure below changes the library "work" to "xil_defaultlib"
+# to avoid problems with simulation in Vivado
+# (see https://forums.xilinx.com/t5/Simulation-and-Verification/ERROR-XSIM-43-3225-Cannot-find-design-unit-xil-defaultlib-glbl/m-p/703641 )
+proc fix_library { lib } {
+    global eprj_default_lib
+    if [ string match $eprj_default_lib "xil_defaultlib"] {
+	if [ string match "work" $lib ] {
+	    set lib "xil_defaultlib"
+	}
+    }
+    return $lib
+}
+
 # The project reading procedure operates on objects storing the files
 proc eprj_create_block {ablock mode setname } {
     upvar $ablock block    
@@ -95,7 +108,7 @@ proc handle_xci {ablock args pdir line} {
     lassign $line lib fname
     set file_obj [add_file_sources block $args $pdir $fname]
     #set_property "synth_checkpoint_mode" "Singular" $file_obj
-    set_property "library" $lib $file_obj
+    set_property "library" [ fix_library $lib ] $file_obj
 }
 
 proc handle_xcix {ablock args pdir line} {
@@ -104,7 +117,7 @@ proc handle_xcix {ablock args pdir line} {
     lassign $line lib fname
     set file_obj [add_file_sources block $args $pdir $fname]
     #set_property "synth_checkpoint_mode" "Singular" $file_obj
-    set_property "library" $lib $file_obj
+    set_property "library" [ fix_library $lib ] $file_obj
     export_ip_user_files -of_objects  $file_obj -force -quiet
 }
 
@@ -114,7 +127,7 @@ proc handle_vhdl {ablock args pdir line} {
     lassign $line lib fname
     set file_obj [add_file_sources block $args $pdir $fname]
     set_property "file_type" "VHDL" $file_obj
-    set_property "library" $lib $file_obj
+    set_property "library" [ fix_library $lib ] $file_obj
 }
 
 proc handle_verilog {ablock args pdir line} {
@@ -166,7 +179,7 @@ proc handle_mif {ablock args pdir line} {
     lassign $line lib fname
     set file_obj [add_file_sources block $args $pdir $fname]
     set_property "file_type" "Memory Initialization Files" $file_obj
-    set_property "library" $lib $file_obj
+    set_property "library" [ fix_library $lib ] $file_obj
     #set_property "synth_checkpoint_mode" "Singular" $file_obj
 }
 
