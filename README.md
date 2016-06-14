@@ -188,4 +188,5 @@ The _vextproj_ was inspired by many publications. Below I provide the most impor
   1. http://xillybus.com/tutorials/vivado-version-control-packaging
   2. http://www.fpgadeveloper.com/2014/08/version-control-for-vivado-projects.html
   3. http://electronics.stackexchange.com/questions/59477/using-svn-with-xilinx-vivado
+  4. http://opencores.org/websvn,filedetails?repname=w11&path=%2Fw11%2Ftrunk%2Fdoc%2FREADME\_buildsystem\_Vivado.txt
 
