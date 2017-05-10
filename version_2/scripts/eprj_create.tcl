@@ -1,6 +1,9 @@
 # Script prepared by Wojciech M. Zabolotny (wzab<at>ise.pw.edu.pl) to
 # create a Vivado project from the hierarchical list of files
 # (extended project files).
+# The VEXTPROJ environment is available at https://github.com/wzab/vextproj
+# and was described in my paper http://dx.doi.org/10.1117/12.2247944
+#
 # This file is published as PUBLIC DOMAIN
 # 
 # Source the project settings
