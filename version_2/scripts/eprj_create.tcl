@@ -105,6 +105,18 @@ proc add_file_sources {ablock args pdir fname} {
     return $file_obj
 }
 
+#Add repo to the sources fileset
+proc add_repo_directory {ablock args pdir dirname} {
+    upvar $ablock block
+    set ndir [file normalize "$pdir/$dirname"]
+    if {! [file exists $ndir]} {
+	eprj_error block "Requested directory $ndir is not available!"
+    }
+    set_property "ip_repo_paths" "$ndir " $block(srcset)  
+    update_ip_catalog -rebuild
+}
+
+
 proc handle_xci {ablock args pdir line} {
     upvar $ablock block
     #Handle XCI file
@@ -132,6 +144,14 @@ proc handle_vhdl {ablock args pdir line} {
     set_property "file_type" "VHDL" $file_obj
     set_property "library" [ fix_library $lib ] $file_obj
 }
+
+proc handle_ip {ablock args pdir line} {
+    upvar $ablock block
+    #Handle VHDL file
+    lassign $line dirname
+    add_repo_directory block $args $pdir $dirname
+}
+
 
 proc handle_verilog {ablock args pdir line} {
     upvar $ablock block
@@ -336,7 +356,8 @@ array set line_handlers {
     mif           handle_mif 
     bd            handle_bd
     vhdl          handle_vhdl
-    
+    ip            handle_ip
+   
     prop          handle_prop
     propadd       handle_propadd
     ooc           handle_ooc
