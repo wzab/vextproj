@@ -43,6 +43,10 @@ The EPRJ file may contain the following lines:
 * bd file\_name
  
   This line adds the Block Design component to the project
+  
+* ip directory\_name
+
+  This line adds a directory with user IP repository to the list of IP repositories in the project
 
 *	vhdl library file\_name
 
