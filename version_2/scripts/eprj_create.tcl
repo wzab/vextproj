@@ -112,7 +112,7 @@ proc add_repo_directory {ablock args pdir dirname} {
     if {! [file exists $ndir]} {
 	eprj_error block "Requested directory $ndir is not available!"
     }
-    set_property "ip_repo_paths" "$ndir " $block(srcset)  
+    set_property "ip_repo_paths" [concat [get_property "ip_repo_paths" $block(srcset)] "$ndir"] $block(srcset)
     update_ip_catalog -rebuild
 }
 
