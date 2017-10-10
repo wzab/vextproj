@@ -5,6 +5,3 @@ vhdl[sim] work ipbus_ctrl.vhd
 vhdl[sim] work ipbus_ctrl_tb.vhd
 include decoder
 include slaves
-
-
-

@@ -7,4 +7,3 @@ This demo will be extended in the nearest future so, that it will make full use 
 capabilities.
 Please note, that the AXI4-Lite to WB bridge is just "proof of the concept" version.
 It supports only "classic standard" accesses.
-
