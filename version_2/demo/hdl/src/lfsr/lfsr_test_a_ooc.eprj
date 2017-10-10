@@ -1,4 +1,3 @@
 include lfsr_ooc_common.eprj
 vhdl work lfsr_test_a.vhd
 xdc_ooc lfsr_test_a_ooc.xdc
-

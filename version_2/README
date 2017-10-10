@@ -24,6 +24,3 @@ experience problems with VHDL package which will be not available in all fileset
 The only way to fix it, is to add it in the Tcl console...
 
 This will be handled automatically in the second version of VEXTPROJ.
-
-
-

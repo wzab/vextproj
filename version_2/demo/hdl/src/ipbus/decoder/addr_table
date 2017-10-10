@@ -7,4 +7,3 @@
 2       lfsr1           0x4     2
 3       lfsr2           0x8     2
 4	ram		0x1000	12
-
