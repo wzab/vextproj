@@ -19,12 +19,12 @@ close $file_ooc_runs
 
 if [expr [llength $ooc_runs] > 0] {
     foreach { run } $ooc_runs {
-	reset_run $run
+        reset_run $run
     }
     launch_runs $ooc_runs -jobs 4
     launch_runs synth_1 -scripts_only
     foreach { run } $ooc_runs {
-	set_property NEEDS_REFRESH 0 [get_runs $run]
+        set_property NEEDS_REFRESH 0 [get_runs $run]
     }
     reset_run synth_1
 }
