@@ -1,0 +1,7 @@
+This design implements the simulated Video input based on Xilinx Test Pattern Generator and Video Frame Buffer Write IP cores.
+https://www.xilinx.com/products/intellectual-property/tpg.html
+https://www.xilinx.com/products/intellectual-property/v-frmbuf.html
+To compile it you need a free TPG license from Xilinx: https://www.xilinx.com/member/forms/license-form.html?product=0451949
+The design also shows handling of board files on the project level.
+The board files for the Z-turn board with xc7z020clg400-1 chip were taken from https://github.com/q3k/zturn-stuff
+
