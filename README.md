@@ -40,9 +40,10 @@ The EPRJ file may contain the following lines:
 
   This line adds the MIF file to the project
   
-* bd file\_name
+* bd file\_name [ top ]
  
-  This line adds the Block Design component to the project
+  This line adds the Block Design component to the project. Additional keyword "top" should be added
+  if the component should be the top entity.
   
 * ip directory\_name
 
