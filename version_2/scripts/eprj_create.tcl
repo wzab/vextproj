@@ -23,6 +23,8 @@ if { $eprj_vivado_version_allow_upgrade } {
         error "Wrong Vivado version. Expected: $eprj_vivado_version , found $viv_version"
     }
 }
+# Set the path to the board files
+set_param board.repoPaths ${eprj_board_files_path}
 # Create project
 create_project $eprj_proj_name ./$eprj_proj_name
 
