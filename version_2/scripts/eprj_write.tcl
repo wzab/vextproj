@@ -6,6 +6,6 @@ source proj_def.tcl
 set old_dir [ pwd ]
 cd ${eprj_proj_name}
 open_project ./${eprj_proj_name}.xpr
-write_project_tcl -force -no_copy_sources {initial_state.tcl}
+write_project_tcl -force -no_copy_sources -use_bd_files {initial_state.tcl}
 puts "INFO: Project $eprj_proj_name written to the initial_state.tcl file"
 cd $old_dir

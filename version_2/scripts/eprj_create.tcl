@@ -24,7 +24,7 @@ if { $eprj_vivado_version_allow_upgrade } {
     }
 }
 # Set the path to the board files
-set_param board.repoPaths ${eprj_board_files_path}
+set_param board.repoPaths [ file normalize ${eprj_board_files_path} ]
 # Create project
 create_project $eprj_proj_name ./$eprj_proj_name
 
@@ -191,10 +191,16 @@ proc handle_global_verilog_header {ablock args pdir line} {
 proc handle_bd {ablock args pdir line} {
     upvar $ablock block
     #Handle BD file
-    lassign $line fname
+    lassign $line fname istop
     set file_obj [add_file_sources block $args $pdir $fname]
     if { ![get_property "is_locked" $file_obj] } {
         set_property "generate_synth_checkpoint" "0" $file_obj
+    }
+    #Generate the wrapper and add it to the project
+    if [string match -nocase $istop "TOP"] {
+	make_wrapper -top -files [ get_files $pdir/$fname ] -import -fileset $block(srcset)
+    } else {
+	make_wrapper -inst_template -files [ get_files $pdir/$fname ] -import -fileset $block(srcset)
     }
 }
 
@@ -359,7 +365,7 @@ array set line_handlers {
     bd            handle_bd
     vhdl          handle_vhdl
     ip            handle_ip
-   
+    
     prop          handle_prop
     propadd       handle_propadd
     ooc           handle_ooc
