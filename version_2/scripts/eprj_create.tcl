@@ -26,7 +26,7 @@ if { $eprj_vivado_version_allow_upgrade } {
 # Set the path to the board files
 set_param board.repoPaths [ file normalize ${eprj_board_files_path} ]
 # Create project
-create_project $eprj_proj_name ./$eprj_proj_name
+create_project -force $eprj_proj_name ./$eprj_proj_name
 
 # Set the directory path for the new project
 set proj_dir [get_property directory [current_project]]
@@ -224,6 +224,7 @@ proc handle_xdc {ablock args pdir line} {
     }
     add_files -norecurse -fileset $block(cnstrset) $nfile
     set file_obj [get_files -of_objects $block(cnstrset) $nfile]
+    set block(last_file_obj) $file_obj
     set_property "file_type" "XDC" $file_obj
 }
 
@@ -243,6 +244,7 @@ proc handle_xdc_ooc {ablock args pdir line} {
         add_files -norecurse -fileset $block(cnstrset) $nfile
         set file_obj [get_files -of_objects $block(cnstrset) $nfile]
         set_property "file_type" "XDC" $file_obj
+        set block(last_file_obj) $file_obj
         set_property USED_IN {out_of_context synthesis implementation} $file_obj
     }
 }
