@@ -249,6 +249,18 @@ proc handle_xdc_ooc {ablock args pdir line} {
     }
 }
 
+proc handle_target {ablock args pdir line} {
+    upvar $ablock block
+    if [string match $block(last_file_obj) "error"] {
+        eprj_error block "I don't know to set target in line $line"
+    } elseif [string match $block(last_file_obj) "none"] {
+        puts "Target ignored $line"
+    } else {
+        lassign $line fset
+        set_property "TARGET_CONSTRS_FILE" $block(last_file_obj) [get_filesets $fset]
+    }
+}
+
 proc handle_prop {ablock args pdir line} {
     upvar $ablock block
     if [string match $block(last_file_obj) "error"] {
@@ -368,6 +380,7 @@ array set line_handlers {
     vhdl          handle_vhdl
     ip            handle_ip
     
+    target        handle_target
     prop          handle_prop
     propadd       handle_propadd
     ooc           handle_ooc
@@ -542,6 +555,14 @@ current_run -implementation [get_runs impl_1]
 set file_ooc_runs [open "ooc_synth_runs.txt" "w"]
 puts $file_ooc_runs $vextproj_ooc_synth_runs
 close $file_ooc_runs
+
+
+set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY none [get_runs synth_1]
+set_property STEPS.SYNTH_DESIGN.ARGS.RETIMING true [get_runs synth_1]
+set_property STEPS.SYNTH_DESIGN.ARGS.KEEP_EQUIVALENT_REGISTERS false [get_runs synth_1]
+set_property STEPS.SYNTH_DESIGN.ARGS.RESOURCE_SHARING on [get_runs synth_1]
+set_property STEPS.SYNTH_DESIGN.ARGS.ASSERT true [get_runs synth_1]
+
 
 puts "INFO: Project created:$eprj_proj_name"
 
