@@ -75,6 +75,12 @@ proc eprj_create_block {ablock mode setname } {
             create_fileset -constrset constrs_1
         }
         set block(cnstrset) [get_filesets constrs_1]
+        # Create 'sim_1' fileset (if not found)
+        if {[string equal [get_filesets -quiet sim_1] ""]} {
+            create_fileset -simset sim_1
+            set_property SOURCE_SET sources_1 [get_filesets sim_1]
+        }
+        set block(simset) [get_filesets sim_1]
     } elseif [string match -nocase $mode "OOC"] {
         # We create only a single blkset
         # Create 'setname' fileset (if not found)
@@ -226,6 +232,20 @@ proc handle_xdc {ablock args pdir line} {
     set file_obj [get_files -of_objects $block(cnstrset) $nfile]
     set block(last_file_obj) $file_obj
     set_property "file_type" "XDC" $file_obj
+}
+
+proc handle_wcfg {ablock args pdir line} {
+    upvar $ablock block
+    #Handle WCFG file
+    lassign $line fname
+    set nfile [file normalize "$pdir/$fname"]
+    if {![file exists $nfile]} {
+        eprj_error block "Requested file $nfile is not available!"
+    }
+    add_files -norecurse -fileset $block(simset) $nfile
+    set file_obj [get_files -of_objects $block(simset) $nfile]
+    set block(last_file_obj) $file_obj
+    #set_property "file_type" "Waveform Configuration File" $file_obj
 }
 
 proc handle_xdc_ooc {ablock args pdir line} {
@@ -390,6 +410,7 @@ array set line_handlers {
     git_local     handle_git_local
     git_remote    handle_git_remote
     svn           handle_svn 
+    wcfg          handle_wcfg
 }
 
 #Line handling procedure
