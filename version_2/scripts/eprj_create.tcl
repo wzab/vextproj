@@ -24,7 +24,7 @@ if { $eprj_vivado_version_allow_upgrade } {
     }
 }
 # Set the path to the board files
-set_param board.repoPaths [ file normalize ${eprj_board_files_path} ]
+#set_param board.repoPaths [ file normalize ${eprj_board_files_path} ]
 # Create project
 create_project -force $eprj_proj_name ./$eprj_proj_name
 
@@ -33,8 +33,8 @@ set proj_dir [get_property directory [current_project]]
 
 # Set project properties
 set obj [get_projects $eprj_proj_name]
-set_property "board_part" $eprj_board_part $obj
 set_property "part" $eprj_part $obj
+set_property "board_part" $eprj_board_part $obj
 set_property "default_lib" $eprj_default_lib $obj
 set_property "simulator_language" $eprj_simulator_language $obj
 set_property "target_language" $eprj_target_language $obj
@@ -155,11 +155,21 @@ proc handle_vhdl {ablock args pdir line} {
 
 proc handle_ip {ablock args pdir line} {
     upvar $ablock block
-    #Handle VHDL file
+    #Handle IP core
     lassign $line dirname
     add_repo_directory block $args $pdir $dirname
 }
 
+proc handle_hls {ablock args pdir line} {
+    upvar $ablock block
+    #Handle HLS defining the IP core
+    lassign $line dirname
+    set old_dir [pwd]
+    cd $dirname
+    exec vivado_hls script.tcl
+    cd $old_dir   
+    add_repo_directory block $args $pdir $dirname/proj/solution1/impl/ip
+}
 
 proc handle_verilog {ablock args pdir line} {
     upvar $ablock block
@@ -202,6 +212,8 @@ proc handle_bd {ablock args pdir line} {
     if { ![get_property "is_locked" $file_obj] } {
         set_property "generate_synth_checkpoint" "0" $file_obj
     }
+    #Upgrade the IPs
+    upgrade_ip [get_ips]
     #Generate the wrapper and add it to the project
     if [string match -nocase $istop "TOP"] {
 	make_wrapper -top -files [ get_files $pdir/$fname ] -import -fileset $block(srcset)
@@ -399,6 +411,7 @@ array set line_handlers {
     bd            handle_bd
     vhdl          handle_vhdl
     ip            handle_ip
+    hls           handle_hls
     
     target        handle_target
     prop          handle_prop
