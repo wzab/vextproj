@@ -213,7 +213,10 @@ proc handle_bd {ablock args pdir line} {
         set_property "generate_synth_checkpoint" "0" $file_obj
     }
     #Upgrade the IPs
-    upgrade_ip [get_ips]
+    set cur_ips [ get_ips ]
+    if {[llength $cur_ips]} { 
+        upgrade_ip [get_ips]
+    }
     #Generate the wrapper and add it to the project
     if [string match -nocase $istop "TOP"] {
 	make_wrapper -top -files [ get_files $pdir/$fname ] -import -fileset $block(srcset)
