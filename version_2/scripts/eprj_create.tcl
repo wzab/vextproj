@@ -153,6 +153,14 @@ proc handle_vhdl {ablock args pdir line} {
     set_property "library" [ fix_library $lib ] $file_obj
 }
 
+proc handle_vhdl2008 {ablock args pdir line} {
+    upvar $ablock block
+    #Handle VHDL file
+    lassign $line lib fname
+    set file_obj [add_file_sources block $args $pdir $fname]
+    set_property "file_type" "VHDL 2008" $file_obj
+    set_property "library" [ fix_library $lib ] $file_obj
+}
 proc handle_ip {ablock args pdir line} {
     upvar $ablock block
     #Handle IP core
@@ -413,6 +421,7 @@ array set line_handlers {
     mif           handle_mif 
     bd            handle_bd
     vhdl          handle_vhdl
+    vhdl2008      handle_vhdl2008
     ip            handle_ip
     hls           handle_hls
     
@@ -594,7 +603,7 @@ puts $file_ooc_runs $vextproj_ooc_synth_runs
 close $file_ooc_runs
 
 
-set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY none [get_runs synth_1]
+set_property STEPS.SYNTH_DESIGN.ARGS.FLATTEN_HIERARCHY rebuilt [get_runs synth_1]
 set_property STEPS.SYNTH_DESIGN.ARGS.RETIMING true [get_runs synth_1]
 set_property STEPS.SYNTH_DESIGN.ARGS.KEEP_EQUIVALENT_REGISTERS false [get_runs synth_1]
 set_property STEPS.SYNTH_DESIGN.ARGS.RESOURCE_SHARING on [get_runs synth_1]
