@@ -6,7 +6,7 @@ Each eprj file contains lines which describe single source file or a directory, 
 For operation with VCS (especially GIT) it is important, that you can build a hierarchy of nested IP blocks, while 
 having the flat structure of directories (one directory for each reusable component, all at the same level).
 This allows to avoid using of submodules.
-The VEXTPROJ environment is also described in my paper: [Version control friendly project management system for FPGA designs](http://doi.org/10.1117/12.2247944).
+The VEXTPROJ environment is also described in my paper: [Version control friendly project management system for FPGA designs](http://doi.org/10.1117/12.2247944) (preprint available [here](http://koral.ise.pw.edu.pl/~wzab/artykuly/vextproj_arch.pdf)).
 
 *Important remark:*
 
