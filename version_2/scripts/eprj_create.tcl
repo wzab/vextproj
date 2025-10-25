@@ -168,13 +168,21 @@ proc handle_ip {ablock args pdir line} {
     add_repo_directory block $args $pdir $dirname
 }
 
+# Please note that the below implementation requires
+# the script.tcl in the HLS project accepting
+# the part type as the first argument
+# It may be handled via:
+#   set_part [lindex $argv 0]
+# right after: open solution "solution1"
+
 proc handle_hls {ablock args pdir line} {
     upvar $ablock block
+    global eprj_part
     #Handle HLS defining the IP core
     lassign $line dirname
     set old_dir [pwd]
-    cd $dirname
-    exec vivado_hls script.tcl
+    cd $pdir/$dirname
+    exec vitis_hls script.tcl $eprj_part
     cd $old_dir   
     add_repo_directory block $args $pdir $dirname/proj/solution1/impl/ip
 }
@@ -608,7 +616,6 @@ set_property STEPS.SYNTH_DESIGN.ARGS.RETIMING true [get_runs synth_1]
 set_property STEPS.SYNTH_DESIGN.ARGS.KEEP_EQUIVALENT_REGISTERS false [get_runs synth_1]
 set_property STEPS.SYNTH_DESIGN.ARGS.RESOURCE_SHARING on [get_runs synth_1]
 set_property STEPS.SYNTH_DESIGN.ARGS.ASSERT true [get_runs synth_1]
-
 
 puts "INFO: Project created:$eprj_proj_name"
 
